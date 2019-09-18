@@ -126,3 +126,4 @@ dmypy.json
 # self added 
 background/
 .DS_Store
+data/

@@ -124,9 +124,9 @@ dmypy.json
 .pyre/
 
 # self added 
-background/
+/background
 .DS_Store
-data/
-model/
-log/
-.vscode/
+/data/
+/model/
+/log/
+/.vscode/

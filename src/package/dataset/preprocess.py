@@ -81,8 +81,6 @@ def split_train_test(stats_file, sketch_dir, image_dir, processed_dir):
                 shutil.copy(os.path.join(sketch_dir, class_name.replace(' ', '_'), item), \
                             sketch_test_dir)
 
-    return 
-
 if __name__ == '__main__':
     stats_file = './data/info/stats.csv'
     sketch_dir = './data/256x256/sketch/tx_000100000000/'

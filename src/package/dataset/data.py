@@ -40,7 +40,7 @@ class Siamese_dataloader_train(torchDataset):
                 if line[1] not in self.class2id:
                     self.class2id[line[1]] = set()
                 self.class2id[line[1]].add(line[2])
-            
+        
     
     def load_each_image(self, path):
         pass

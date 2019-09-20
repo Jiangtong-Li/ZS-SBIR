@@ -6,15 +6,11 @@ import shutil
 import csv
 import re
 
-TEST_CLASS = set(['bat', 'cabin', 'cow', 'dolphin', 'door', \
-              'giraffe', 'helicopter', 'mouse', 'pear', \
-              'raccoon', 'rhinoceros', 'saw', 'scissors', \
-              'seagull', 'skyscraper', 'songbird', 'sword', \
-              'tree', 'wheelchair', 'windmill', 'window'])
-TRAIN_CLASS = set()
+from package.dataset.utils import match_filename, TRAIN_CLASS, TEST_CLASS
 
 
-def split_train_test(stats_file, sketch_dir, image_dir, processed_dir):
+
+def split_train_test_zs(stats_file, sketch_dir, image_dir, processed_dir):
     stats_train = list()
     stats_test = list()
     class2sketch_dirlist = dict() # dict -> list
@@ -45,13 +41,10 @@ def split_train_test(stats_file, sketch_dir, image_dir, processed_dir):
                 class_imageid_test[line[1]].add(line[2])
                 stats_test.append(line)
             else:
-                TRAIN_CLASS.add(line[1])
                 if line[1] not in class_imageid_train:
                     class_imageid_train[line[1]] = set()
                 class_imageid_train[line[1]].add(line[2])
                 stats_train.append(line)
-
-    assert TRAIN_CLASS & TEST_CLASS == set()
 
     with open(stats_train_file, 'w') as stats_out:
         stats_train_writer = csv.writer(stats_out)
@@ -72,8 +65,8 @@ def split_train_test(stats_file, sketch_dir, image_dir, processed_dir):
     for class_name in TEST_CLASS:
         for id_name in class_imageid_test[class_name]:
             pattern = id_name + '*'
-            id_name_imagelist = [file for file in class2image_dirlist[class_name] if re.match(pattern, file)]
-            id_name_sketchlist = [file for file in class2sketch_dirlist[class_name] if re.match(pattern, file)]
+            id_name_imagelist = match_filename(pattern, class2image_dirlist[class_name])
+            id_name_sketchlist = match_filename(pattern, class2sketch_dirlist[class_name])
             for item in id_name_imagelist:
                 shutil.copy(os.path.join(image_dir, class_name.replace(' ', '_'), item), \
                             image_test_dir)
@@ -86,4 +79,4 @@ if __name__ == '__main__':
     sketch_dir = './data/256x256/sketch/tx_000100000000/'
     image_dir = './data/256x256/photo/tx_000100000000/'
     processed_dir = './data/preprocessed/'
-    split_train_test(stats_file, sketch_dir, image_dir, processed_dir)
+    split_train_test_zs(stats_file, sketch_dir, image_dir, processed_dir)

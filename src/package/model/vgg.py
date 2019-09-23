@@ -69,7 +69,6 @@ class VGG(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-
 def make_layers(cfg, batch_norm=False):
     layers = []
     in_channels = 3

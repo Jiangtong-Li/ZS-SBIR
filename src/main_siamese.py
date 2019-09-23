@@ -36,7 +36,7 @@ def train(args):
                                   batch_size=args.batch_size, shuffle=args.shuffle)
     
     logger.info('Building the model ...')
-    model = Siamese(args.margin, args.loss_type, args.distance_type, batch_normalization=False, from_pretrain=False, logger=logger)
+    model = Siamese(args.margin, args.loss_type, args.distance_type, batch_normalization=False, from_pretrain=True, logger=logger)
     logger.info('Building the optimizer ...')
     optimizer = Adam(params=model.parameters(), lr=args.lr)
 
@@ -66,6 +66,18 @@ def train(args):
             batch_acm += 1
             if batch_acm <= args.warmup_steps:
                 update_lr(optimizer, args.lr*batch_acm/args.warmup_steps)
+            
+            """
+            code for testing if the images and the sketches are corresponding to each other correctly
+
+            for i in range(args.batch_size):
+                sk = sketch[i].numpy().reshape(224, 224, 3)
+                im = image[i].numpy().reshape(224, 224, 3)
+                print(label[i])
+                ims = np.vstack((np.uint8(sk), np.uint8(im)))
+                cv2.imshow('test', ims)
+                cv2.waitKey(3000)
+            """
 
             shape = sketch.shape
             sketch = sketch.cuda(args.gpu_id)

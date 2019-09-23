@@ -8,7 +8,7 @@ python ./src/main_siamese.py --sketch_dir_train /home/jiangtongli/Lab_Work/ZS-SB
                               --log_file /home/jiangtongli/Lab_Work/ZS-SBIR/log/run1.log \
                               --shuffle \
                               --mode 0 \
-                              --margin 2 \
+                              --margin 300 \
                               --loss_type 0 \
                               --distance_type 0 \
                               --patience 10 \

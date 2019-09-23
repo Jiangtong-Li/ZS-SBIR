@@ -180,12 +180,9 @@ class Siamese_dataloader(torchDataset):
     def load_each_image_use(self, path):
         image = self.loaded_image[path]
         image = image.copy()
-        image = image[:,:,::-1]
-        image = image.astype(np.float32)
         image = image.reshape(3, IMAGE_SIZE, IMAGE_SIZE)
-        image = torch.from_numpy(image)
-        image = image/255.0
-        image = self.Normalize(image)
+        image = torch.Tensor(image)
+        #image = self.Normalize(image)
         #print(image)
         return image
 

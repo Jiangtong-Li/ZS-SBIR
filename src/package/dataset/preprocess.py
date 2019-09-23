@@ -7,8 +7,7 @@ import csv
 import re
 
 from package.dataset.utils import match_filename, TRAIN_CLASS, TEST_CLASS
-
-
+#from utils import match_filename, TRAIN_CLASS, TEST_CLASS
 
 def split_train_test_zs(stats_file, sketch_dir, image_dir, processed_dir):
     stats_train = list()
@@ -73,6 +72,18 @@ def split_train_test_zs(stats_file, sketch_dir, image_dir, processed_dir):
             for item in id_name_sketchlist:
                 shutil.copy(os.path.join(sketch_dir, class_name.replace(' ', '_'), item), \
                             sketch_test_dir)
+    
+    for class_name in TRAIN_CLASS:
+        for id_name in class_imageid_train[class_name]:
+            pattern = id_name + '*'
+            id_name_imagelist = match_filename(pattern, class2image_dirlist[class_name])
+            id_name_sketchlist = match_filename(pattern, class2sketch_dirlist[class_name])
+            for item in id_name_imagelist:
+                shutil.copy(os.path.join(image_dir, class_name.replace(' ', '_'), item), \
+                            image_train_dir)
+            for item in id_name_sketchlist:
+                shutil.copy(os.path.join(sketch_dir, class_name.replace(' ', '_'), item), \
+                            sketch_train_dir)
 
 if __name__ == '__main__':
     stats_file = './data/info/stats.csv'

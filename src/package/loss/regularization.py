@@ -2,25 +2,25 @@ import torch
 import torch.nn as nn
 
 class _Regularization(nn.Module):
-    def __init__(self,model,weight_decay,p=2):
+    def __init__(self,model,weight_decay,logger,p=2):
         '''
-        :param model 模型
-        :param weight_decay:正则化参数
-        :param p: 范数计算中的幂指数值，默认求2范数,
-                  当p=0为L2正则化,p=1为L1正则化
+        :param model
+        :param weight_decay
+        :param p: p=0 -> L2, p=1 -> L1
         '''
         super(_Regularization, self).__init__()
         if weight_decay <= 0:
             print("param weight_decay can not <=0")
             exit(0)
         self.model=model
+        self.logger=logger
         self.weight_decay=weight_decay
         self.p=p
         self.weight_list=self.get_weight(model)
         self.weight_info(self.weight_list)
  
     def forward(self, model):
-        self.weight_list=self.get_weight(model)#获得最新的权重
+        self.weight_list=self.get_weight(model)
         reg_loss = self.regularization_loss(self.weight_list, self.weight_decay, p=self.p)
         return reg_loss
  
@@ -56,6 +56,6 @@ class _Regularization(nn.Module):
         '''
         :param weight_list:
         '''
-        print("---------------regularization weight---------------")
+        self.logger.info("---------------regularization weight---------------")
         for name, _ in weight_list:
-            print(name)
+            self.logger.info("\t{}".format(name))

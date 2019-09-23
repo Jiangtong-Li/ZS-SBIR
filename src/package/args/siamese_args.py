@@ -1,0 +1,32 @@
+import argparse
+
+def parse_config():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--sketch_dir_train', type=str)
+    parser.add_argument('--image_dir_train', type=str)
+    parser.add_argument('--sketch_dir_test', type=str)
+    parser.add_argument('--image_dir_test', type=str)
+    parser.add_argument('--stats_file_train', type=str)
+    parser.add_argument('--stats_file_test', type=str)
+    parser.add_argument('--packed_pkl', type=str)
+    parser.add_argument('--log_file', type=str)
+    parser.add_argument('--image_normalize', action='store_true')
+    parser.add_argument('--shuffle', action='store_true')
+    parser.add_argument('--mode', type=int, choices=[0, 1], help='0 for zero-shot, 1 for non zero-shot')
+
+    parser.add_argument('--margin', type=float)
+    parser.add_argument('--loss_type', type=int, choices=[0, 1])
+    parser.add_argument('--distance_type', type=int, choices=[0, 1], help='0 for l2, 1 for cosine')
+    parser.add_argument('--patience', type=int, default=5)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--num_worker', type=int, default=16)
+    parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--warmup_steps', type=int, default=100)
+    parser.add_argument('--lr', type=float, default=1e-5)
+    parser.add_argument('--print_every', type=int, default=100)
+    parser.add_argument('--save_every', type=int, default=1000)
+    parser.add_argument('--start_from', type=str, default=None)
+    parser.add_argument('--save_dir', type=str)
+    parser.add_argument('--gpu_id', type=int, default=0)
+
+    return parser.parse_args()

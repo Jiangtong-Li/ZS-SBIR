@@ -23,7 +23,7 @@ model_urls = {
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_classes=1000, init_weights=True, return_type=0):
+    def __init__(self, features, num_classes=1000, init_weights=True, return_type=0, dropout=0.1):
         """
         return_type - [0, 1] - [classification result, 4096-D feature]
         """
@@ -33,10 +33,10 @@ class VGG(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
             nn.ReLU(True),
-            nn.Dropout(),
+            nn.Dropout(dropout),
             nn.Linear(4096, 4096),
             nn.ReLU(True),
-            nn.Dropout(),
+            nn.Dropout(dropout),
             nn.Linear(4096, num_classes),
         )
         self.return_type = return_type
@@ -48,8 +48,8 @@ class VGG(nn.Module):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         if self.return_type == 1:
-            for idx in range(0, len(self.classifier)-1):
-                x = self.classifier[idx]
+            for idx in range(0, len(self.classifier)-3):
+                x = self.classifier[idx](x)
         elif self.return_type == 0:
             x = self.classifier(x)
         else:

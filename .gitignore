@@ -130,3 +130,6 @@ dmypy.json
 /model/
 /log/
 /.vscode/
+/runs/
+cv2
+np

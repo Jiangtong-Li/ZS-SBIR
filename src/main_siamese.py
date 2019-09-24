@@ -35,16 +35,13 @@ def train(args):
                               args.sketch_dir_test, args.image_dir_test, args.stats_file_test, \
                               args.packed_pkl)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
-                                  batch_size=args.batch_size, shuffle=False)
-    
-    #data_mnist = load_train()
-    #dataloader_mnist = DataLoader(data_mnist, batch_size=32)
+                                  batch_size=args.batch_size,
+                                  shuffle=args.shuffle)
 
     logger.info('Building the model ...')
     model = Siamese(args.margin, args.loss_type, args.distance_type, batch_normalization=False, from_pretrain=True, logger=logger)
     logger.info('Building the optimizer ...')
     optimizer = Adam(params=model.parameters(), lr=args.lr)
-    #optimizer = SGD(params=model.parameters(), lr=0.01, momentum=0.9)
     siamese_loss = _Siamese_loss()
     l1_regularization = _Regularization(model, 0.1, p=1, logger=logger)
     l2_regularization = _Regularization(model, 1e-4, p=2, logger=logger)
@@ -70,12 +67,11 @@ def train(args):
     while True:
         if patience <= 0:
             break
-        for sketch, image, label in dataloader_train:#data.load_same_class_image(batch_size=32):
+        for sketch, image, label in dataloader_train:
             model.train()
             batch_acm += 1
             if batch_acm <= args.warmup_steps:
                 update_lr(optimizer, args.lr*batch_acm/args.warmup_steps)
-
             """
             #code for testing if the images and the sketches are corresponding to each other correctly
 
@@ -112,8 +108,6 @@ def train(args):
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
-            print(loss_siamese.item())
-            break
             if batch_acm % args.print_every == -1 % args.print_every:
                 logger.info('Iter {}, Loss/siamese {:.3f}, Loss/l1 {:.3f}, Loss/l2 {:.3f}, Siamese/sim {:.3f}, Siamese/dis_sim {:.3f}'.format(batch_acm, \
                              loss_siamese_acm/args.print_every, loss_l1_acm/args.print_every, \

@@ -23,19 +23,23 @@ class _Siamese_loss(nn.Module):
             distance = self.cosine(model1, model2)
         else:
             raise ValueError('The distance type should be 0 or 1')
+        distance = distance.reshape(distance.shape[0], 1)
 
         if loss_type == 0:
-            similarity = label * torch.pow(distance, 2)
-            dissimilarity = (1-label) * torch.pow(torch.clamp(margin-distance, min=0.0), 2)
+            similarity = torch.mul(label, torch.pow(distance, 2))
+            dissimilarity = torch.mul((1-label), torch.pow(torch.clamp(margin-distance,min=0.0), 2))
         elif loss_type == 1:
             Q = margin
             alpha = 2 / Q
             beta = 2 * Q
             gamma = -2.77 / Q
-            similarity = label * (alpha*(torch.pow(distance, 2)))
-            dissimilarity = (1-label) * beta*torch.exp(gamma*distance)
+            similarity = torch.mul(label, (alpha*(torch.pow(distance, 2))))
+            dissimilarity = torch.mul((1-label), beta*torch.exp(gamma*distance))
         else:
             raise ValueError('The loss type should be 0 or 1')
+
+        assert similarity.shape == (batch_size, 1)
+        assert dissimilarity.shape == (batch_size, 1)
 
         loss = torch.mean(similarity+dissimilarity)
         return loss, torch.mean(similarity), torch.mean(dissimilarity)

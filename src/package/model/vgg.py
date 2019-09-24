@@ -30,15 +30,26 @@ class VGG(nn.Module):
         super(VGG, self).__init__()
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 7 * 7, 4096),
-            nn.ReLU(True),
-            nn.Dropout(dropout),
-            nn.Linear(4096, 4096),
-            nn.ReLU(True),
-            nn.Dropout(dropout),
-            nn.Linear(4096, num_classes),
-        )
+        if return_type == 0:
+            self.classifier = nn.Sequential(
+                nn.Linear(512 * 7 * 7, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, 4096),
+                nn.ReLU(True),
+                nn.Dropout(),
+                nn.Linear(4096, num_classes),
+            )
+        elif return_type == 1:
+            self.classifier = nn.Sequential(
+                nn.Linear(512 * 7 * 7, 4096),
+                nn.ReLU(True),
+                nn.Dropout(0.5),
+                nn.Linear(4096, 4096)
+            )
+        else:
+            raise ValueError('The return_type should between {0, 1}')
+
         self.return_type = return_type
         if init_weights:
             self._initialize_weights()
@@ -47,13 +58,7 @@ class VGG(nn.Module):
         x = self.features(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        if self.return_type == 1:
-            for idx in range(0, len(self.classifier)-3):
-                x = self.classifier[idx](x)
-        elif self.return_type == 0:
-            x = self.classifier(x)
-        else:
-            raise ValueError('The return type should be 0 or 1')
+        x = self.classifier(x)
         return x
 
     def _initialize_weights(self):
@@ -100,7 +105,7 @@ def _vgg(arch, cfg, batch_norm, pretrained, progress, **kwargs):
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
-        model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 

@@ -19,8 +19,8 @@ class _Regularization(nn.Module):
         self.weight_list=self.get_weight(model)
         self.weight_info(self.weight_list)
  
-    def forward(self, model):
-        self.weight_list=self.get_weight(model)
+    def forward(self):
+        self.weight_list=self.get_weight(self.model)
         reg_loss = self.regularization_loss(self.weight_list, self.weight_decay, p=self.p)
         return reg_loss
  

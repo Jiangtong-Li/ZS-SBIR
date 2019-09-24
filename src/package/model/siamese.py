@@ -15,18 +15,11 @@ class Siamese(nn.Module):
             self.model = vgg16_bn(pretrained=from_pretrain, return_type=1)
         else:
             self.model = vgg16(pretrained=from_pretrain, return_type=1)
-        self.siamese_loss = _Siamese_loss()
-        self.l1_regularization = _Regularization(self.model, 0.1, p=1, logger=logger)
-        self.l2_regularization = _Regularization(self.model, 0.1, p=2, logger=logger)
 
-    def forward(self, sketch, image, label):
+    def forward(self, sketch, image):
         sketch_feature = self.model(sketch)
         image_feature = self.model(image)
-        loss_siamese, sim, dis_sim = self.siamese_loss(sketch_feature, image_feature, label, \
-                            self.margin, self.loss_type, self.distance_type)
-        loss_l1 = self.l1_regularization(self.model)
-        loss_l2 = self.l2_regularization(self.model)
-        return loss_siamese, sim, dis_sim, loss_l1, loss_l2
+        return sketch_feature, image_feature
     
     def get_feature(self, input):
         return self.model(input)

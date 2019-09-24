@@ -23,7 +23,7 @@ class _Siamese_loss(nn.Module):
             distance = self.cosine(model1, model2)
         else:
             raise ValueError('The distance type should be 0 or 1')
-        
+
         if loss_type == 0:
             similarity = label * torch.pow(distance, 2)
             dissimilarity = (1-label) * torch.pow(torch.clamp(margin-distance, min=0.0), 2)

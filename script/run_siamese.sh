@@ -8,7 +8,7 @@ python ./src/main_siamese.py --sketch_dir_train /home/jiangtongli/Lab_Work/ZS-SB
                               --log_file /home/jiangtongli/Lab_Work/ZS-SBIR/log/run1.log \
                               --shuffle \
                               --mode 0 \
-                              --margin 300 \
+                              --margin 2 \
                               --loss_type 0 \
                               --distance_type 0 \
                               --patience 10 \
@@ -16,8 +16,8 @@ python ./src/main_siamese.py --sketch_dir_train /home/jiangtongli/Lab_Work/ZS-SB
                               --num_worker 16 \
                               --dropout 0.2 \
                               --warmup_steps 0 \
-                              --lr 1e-5 \
+                              --lr 5e-5 \
                               --print_every 50 \
-                              --save_every 100000 \
+                              --save_every 200 \
                               --save_dir /home/jiangtongli/Lab_Work/ZS-SBIR/model/run1/ \
                               --gpu_id 0

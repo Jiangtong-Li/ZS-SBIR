@@ -23,10 +23,8 @@ class Siamese_dataloader(torchDataset):
         self.Normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         self.train_class = TRAIN_CLASS
         self.test_class = TEST_CLASS
-        if zs:
-            self.train_id, self.test_id = self.split_zs()
-        else:
-            self.train_id, self.test_id = self.split_nozs()
+        self.overall_class = self.train_class + self.test_class
+        self.zs = zs
         self.class2path_sketch = dict() # class: set(path) | for sketch | for train
         self.class2path_image = dict() # class: set(path) | for image | for train
         self.path2class_sketch = dict() # path: class | for sketch | for train
@@ -38,60 +36,6 @@ class Siamese_dataloader(torchDataset):
         self.id2path = list() # path list corresponding to path2class_sketch 
         self.loaded_image = dict() # path: loaded image 
         self.load()
-    
-    def split_zs(self):
-        cla = None
-        id_list = list()
-        train_ids = dict()
-        test_ids = dict()
-        with open(self.stats_file, 'r') as fin:
-            reader = csv.reader(fin)
-            _header = next(reader)
-            for item in reader:
-                if item[1].replace(' ', '_') != cla and cla is not None:
-                    id_list = list(set(id_list))
-                    random.shuffle(id_list)
-                    if cla in self.train_class:
-                        train_ids[cla] = id_list
-                    else:
-                        test_ids[cla] = id_list
-                    id_list = list()
-                    cla = item[1].replace(' ', '_')
-                elif item[1] != cla and cla is None:
-                    cla = item[1].replace(' ', '_')
-                id_list.append(item[2])
-            id_list = list(set(id_list))
-            random.shuffle(id_list)
-            if cla in self.train_class:
-                train_ids[cla] = id_list
-            else:
-                test_ids[cla] = id_list
-        return train_ids, test_ids
-
-    def split_nozs(self):
-        cla = None
-        id_list = list()
-        train_ids = dict()
-        test_ids = dict()
-        with open(self.stats_file, 'r') as fin:
-            reader = csv.reader(fin)
-            _header = next(reader)
-            for item in reader:
-                if item[1].replace(' ', '_') != cla and cla is not None:
-                    id_list = list(set(id_list))
-                    random.shuffle(id_list)
-                    train_ids[cla] = id_list[:int(0.8*len(id_list))]
-                    test_ids[cla] = id_list[int(0.8*len(id_list)):]
-                    id_list = list()
-                    cla = item[1].replace(' ', '_')
-                elif item[1] != cla and cla is None:
-                    cla = item[1].replace(' ', '_')
-                id_list.append(item[2])
-            id_list = list(set(id_list))
-            random.shuffle(id_list)
-            train_ids[cla] = id_list[:int(0.8*len(id_list))]
-            test_ids[cla] = id_list[int(0.8*len(id_list)):]
-        return train_ids, test_ids
     
     def __getitem__(self, index):
         sketch = self.load_each_image_use(self.id2path[int(index/2)])
@@ -178,47 +122,56 @@ class Siamese_dataloader(torchDataset):
             return
 
         # train part
-        for cla, id_list in self.train_id.items():
+        for cla in self.overall_class:
             image_cla_dir = [os.path.join(self.image_dir, cla, fname) for fname in os.listdir(os.path.join(self.image_dir, cla))]
             sketch_cla_dir = [os.path.join(self.sketch_dir, cla, fname) for fname in os.listdir(os.path.join(self.sketch_dir, cla))]
-            if cla not in self.class2path_sketch:
-                self.class2path_sketch[cla] = list()
-            if cla not in self.class2path_image:
-                self.class2path_image[cla] = list()
-            for id in id_list:
-                pattern = '.*' + id + '.*'
-                # sketch part
-                id_files = match_filename(pattern, sketch_cla_dir)
-                for id_file in id_files:
-                    self.class2path_sketch[cla].append(id_file)
-                    self.path2class_sketch[id_file] = cla
-                    self.id2path.append(id_file)
-                # image part
-                id_files = match_filename(pattern, image_cla_dir)
-                for id_file in id_files:
-                    self.class2path_image[cla].append(id_file)
-                    self.path2class_image[id_file] = cla
-        # test part
-        for cla, id_list in self.test_id.items():
-            image_cla_dir = [os.path.join(self.image_dir, cla, fname) for fname in (os.listdir(os.path.join(self.image_dir, cla)))]
-            sketch_cla_dir = [os.path.join(self.sketch_dir, cla, fname) for fname in (os.listdir(os.path.join(self.sketch_dir, cla)))]
-            if cla not in self.class2path_sketch_test:
-                self.class2path_sketch_test[cla] = list()
-            if cla not in self.class2path_image_test:
-                self.class2path_image_test[cla] = list()
-            for id in id_list:
-                pattern = '.*' + id + '.*'
-                # sketch part
-                id_files = match_filename(pattern, sketch_cla_dir)
-                for id_file in id_files:
-                    self.class2path_sketch_test[cla].append(id_file)
-                    self.path2class_sketch_test[id_file] = cla
-                # image part
-                id_files = match_filename(pattern, image_cla_dir)
-                for id_file in id_files:
-                    self.class2path_image_test[cla].append(id_file)
-                    self.path2class_image_test[id_file] = cla
+            if self.zs:
+                if cla in self.train_class:
+                    if cla not in self.class2path_image:
+                        self.class2path_image[cla] = list()
+                    if cla not in self.class2path_sketch:
+                        self.class2path_sketch[cla] = list()
+                    for path in image_cla_dir:
+                        self.path2class_image[path] = cla
+                        self.class2path_image[cla].append(path)
+                    for path in sketch_cla_dir:
+                        self.path2class_sketch[path] =cla
+                        self.id2path.append(path)
+                        self.class2path_sketch[cla].append(path)
+                else:
+                    if cla not in self.class2path_image_test:
+                        self.class2path_image_test[cla] = list()
+                    if cla not in self.class2path_sketch_test:
+                        self.class2path_sketch_test[cla] = list()
+                    for path in image_cla_dir:
+                        self.path2class_image_test[path] = cla
+                        self.class2path_image_test[cla].append(path)
+                    for path in sketch_cla_dir:
+                        self.path2class_sketch_test[path] =cla
+                        self.class2path_sketch_test[cla].append(path)
+            else:
+                if cla in self.test_class:
+                    random.shuffle(image_cla_dir)
+                    random.shuffle(sketch_cla_dir)
+                    train_im = image_cla_dir[:int(0.5*len(image_cla_dir))]
+                    test_im = image_cla_dir[int(0.5*len(image_cla_dir)):]
+                    train_sk = image_cla_dir[:int(0.5*len(sketch_cla_dir))]
+                    test_sk = image_cla_dir[int(0.5*len(sketch_cla_dir)):]
+                    self.class2path_image[cla] = train_im
+                    self.class2path_sketch[cla] = train_sk
+                    self.class2path_image_test[cla] = test_im
+                    self.class2path_sketch_test[cla] = test_sk
+                    for path in train_im:
+                        self.path2class_image[path] = cla
+                    for path in train_sk:
+                        self.path2class_sketch[path] = cla
+                        self.id2path.append(path)
+                    for path in test_im:
+                        self.path2class_image_test[path] = cla
+                    for path in test_sk:
+                        self.path2class_sketch_test[path] = cla
         
+        assert len(self.path2class_sketch.keys()) == len(self.id2path)
         preloaded_data = dict()
         # Train part
         preloaded_data['path2class_sketch'] = self.path2class_sketch

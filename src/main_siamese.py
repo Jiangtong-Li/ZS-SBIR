@@ -21,7 +21,6 @@ from package.dataset.data import Siamese_dataloader
 from package.args.siamese_args import parse_config
 from package.dataset.utils import make_logger
 
-from package.dataset.data_mnist import load_train
 
 def update_lr(optimizer, lr):
     for param_group in optimizer.param_groups:
@@ -30,10 +29,13 @@ def update_lr(optimizer, lr):
 def train(args):
     writer = SummaryWriter()
     logger = make_logger(args.log_file)
+    
+    if args.zs:
+        packed = args.packed_pkl_zs
+    else:
+        packed = args.packed_pkl_nozs
 
-    data = Siamese_dataloader(args.sketch_dir_train, args.image_dir_train, args.stats_file_train, \
-                              args.sketch_dir_test, args.image_dir_test, args.stats_file_test, \
-                              args.packed_pkl)
+    data = Siamese_dataloader(args.sketch_dir, args.image_dir, args.stats_file, packed, args.zs)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -67,55 +69,15 @@ def train(args):
     while True:
         if patience <= 0:
             break
-        for sketch, image, label in dataloader_train:
-            model.train()
-            batch_acm += 1
-            if batch_acm <= args.warmup_steps:
-                update_lr(optimizer, args.lr*batch_acm/args.warmup_steps)
-            """
-            #code for testing if the images and the sketches are corresponding to each other correctly
-
-            for i in range(args.batch_size):
-                sk = sketch[i].numpy().reshape(224, 224, 3)
-                im = image[i].numpy().reshape(224, 224, 3)
-                print(label[i])
-                ims = np.vstack((np.uint8(sk), np.uint8(im)))
-                cv2.imshow('test', ims)
-                cv2.waitKey(3000)
-            """
-
-            sketch = sketch.cuda(args.gpu_id)
-            image = image.cuda(args.gpu_id)
-            label = label.float().cuda(args.gpu_id)
-
-            optimizer.zero_grad()
-            sketch_feature, image_feature = model(sketch, image)
-            loss_siamese, sim, dis_sim = siamese_loss(sketch_feature, image_feature, label, args.margin, loss_type=args.loss_type, distance_type=args.distance_type)
-            loss_l1 = l1_regularization()
-            loss_l2 = l2_regularization()
-            loss_siamese_acm += loss_siamese.item()
-            sim_acm += sim.item()
-            dis_sim_acm += dis_sim.item()
-            loss_l1_acm += loss_l1.item()
-            loss_l2_acm += loss_l2.item()
-            writer.add_scalar('Loss/Siamese', loss_siamese.item(), batch_acm)
-            writer.add_scalar('Loss/L1', loss_l1.item(), batch_acm)
-            writer.add_scalar('Loss/L2', loss_l2.item(), batch_acm)
-            writer.add_scalar('Siamese/Similar', sim.item(), batch_acm)
-            writer.add_scalar('Siamese/Dis-Similar', dis_sim.item(), batch_acm)
-            loss = loss_siamese + loss_l2
-            loss.backward()
-
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
-            if batch_acm % args.print_every == -1 % args.print_every:
+        for sketch_batch, image_batch, label_batch in dataloader_train:
+            if batch_acm % args.print_every == 0 % args.print_every:
                 logger.info('Iter {}, Loss/siamese {:.3f}, Loss/l1 {:.3f}, Loss/l2 {:.3f}, Siamese/sim {:.3f}, Siamese/dis_sim {:.3f}'.format(batch_acm, \
                              loss_siamese_acm/args.print_every, loss_l1_acm/args.print_every, \
                              loss_l2_acm/args.print_every, sim_acm/args.print_every, \
                              dis_sim_acm/args.print_every))
                 loss_siamese_acm, sim_acm, dis_sim_acm, loss_l1_acm, loss_l2_acm = 0., 0., 0., 0., 0.,
 
-            if batch_acm % args.save_every == -1 % args.save_every:
+            if batch_acm % args.save_every == 0 % args.save_every:
                 if not os.path.exists(args.save_dir):
                     os.mkdir(args.save_dir)
                 torch.save({'args':args, 'model':model.state_dict(), \
@@ -177,6 +139,49 @@ def train(args):
                     patience -= 1
             if patience <= 0:
                 break
+
+            model.train()
+            batch_acm += 1
+            if batch_acm <= args.warmup_steps:
+                update_lr(optimizer, args.lr*batch_acm/args.warmup_steps)
+            """
+            #code for testing if the images and the sketches are corresponding to each other correctly
+
+            for i in range(args.batch_size):
+                sk = sketch_batch[i].numpy().reshape(224, 224, 3)
+                im = image_batch[i].numpy().reshape(224, 224, 3)
+                print(label[i])
+                ims = np.vstack((np.uint8(sk), np.uint8(im)))
+                cv2.imshow('test', ims)
+                cv2.waitKey(3000)
+            """
+
+            sketch = sketch_batch.cuda(args.gpu_id)
+            image = image_batch.cuda(args.gpu_id)
+            label = label_batch.float().cuda(args.gpu_id)
+
+            optimizer.zero_grad()
+            sketch_feature, image_feature = model(sketch, image)
+            loss_siamese, sim, dis_sim = siamese_loss(sketch_feature, image_feature, label, args.margin, loss_type=args.loss_type, distance_type=args.distance_type)
+            loss_l1 = l1_regularization()
+            loss_l2 = l2_regularization()
+            loss_siamese_acm += loss_siamese.item()
+            sim_acm += sim.item()
+            dis_sim_acm += dis_sim.item()
+            loss_l1_acm += loss_l1.item()
+            loss_l2_acm += loss_l2.item()
+            writer.add_scalar('Loss/Siamese', loss_siamese.item(), batch_acm)
+            writer.add_scalar('Loss/L1', loss_l1.item(), batch_acm)
+            writer.add_scalar('Loss/L2', loss_l2.item(), batch_acm)
+            writer.add_scalar('Siamese/Similar', sim.item(), batch_acm)
+            writer.add_scalar('Siamese/Dis-Similar', dis_sim.item(), batch_acm)
+            loss = loss_siamese + loss_l2
+            loss.backward()
+
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+
+            #print(loss_siamese.item())
 
 if __name__ == '__main__':
     args = parse_config()

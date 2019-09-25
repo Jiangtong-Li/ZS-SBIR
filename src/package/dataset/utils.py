@@ -10,24 +10,24 @@ TEST_CLASS = set(['bat', 'cabin', 'cow', 'dolphin', 'door', \
                   'tree', 'wheelchair', 'windmill', 'window'])
 TRAIN_CLASS = set(['squirrel', 'turtle', 'tiger', 'bicycle', \
                    'crocodilian', 'frog', 'bread', 'hedgehog', \
-                   'hot-air balloon', 'ape', 'elephant', 'geyser', \
+                   'hot-air_balloon', 'ape', 'elephant', 'geyser', \
                    'chicken', 'ray', 'fan', 'hotdog', 'pizza', \
                    'duck', 'piano', 'armor', 'axe', 'hammer', \
                    'camel', 'horse', 'spider', 'kangaroo', \
-                   'mushroom', 'owl', 'seal', 'table', 'hermit crab', \
-                   'zebra', 'car (sedan)', 'shark', 'flower', 'guitar', \
-                   'bench', 'wine bottle', 'fish', 'snail', 'deer', \
-                   'knife', 'airplane', 'sea turtle', 'hat', 'eyeglasses', \
+                   'mushroom', 'owl', 'seal', 'table', 'hermit_crab', \
+                   'zebra', 'car_(sedan)', 'shark', 'flower', 'guitar', \
+                   'bench', 'wine_bottle', 'fish', 'snail', 'deer', \
+                   'knife', 'airplane', 'sea_turtle', 'hat', 'eyeglasses', \
                    'parrot', 'bee', 'tank', 'lion', 'swan', 'penguin', \
                    'violin', 'rabbit', 'motorcycle', 'lobster', 'sheep', \
-                   'snake', 'shoe', 'hamburger', 'teddy bear', 'pretzel', \
-                   'alarm clock', 'church', 'ant', 'trumpet', 'candle', \
+                   'snake', 'shoe', 'hamburger', 'teddy_bear', 'pretzel', \
+                   'alarm_clock', 'church', 'ant', 'trumpet', 'candle', \
                    'chair', 'hourglass', 'cat', 'scorpion', 'bear', 'dog', \
-                   'beetle', 'cannon', 'pig', 'cup', 'crab', 'pickup truck', \
+                   'beetle', 'cannon', 'pig', 'cup', 'crab', 'pickup_truck', \
                    'pineapple', 'apple', 'lizard', 'sailboat', 'spoon', \
                    'umbrella', 'rocket', 'teapot', 'couch', 'butterfly', \
                    'blimp', 'jellyfish', 'rifle', 'starfish', 'banana', \
-                   'wading bird', 'bell', 'pistol', 'saxophone', 'strawberry', \
+                   'wading_bird', 'bell', 'pistol', 'saxophone', 'strawberry', \
                    'jack-o-lantern', 'castle', 'racket', 'harp', 'volcano'])
 
 IMAGE_SIZE = 224

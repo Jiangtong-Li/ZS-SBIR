@@ -2,13 +2,11 @@ import argparse
 
 def parse_config():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sketch_dir_train', type=str)
-    parser.add_argument('--image_dir_train', type=str)
-    parser.add_argument('--sketch_dir_test', type=str)
-    parser.add_argument('--image_dir_test', type=str)
-    parser.add_argument('--stats_file_train', type=str)
-    parser.add_argument('--stats_file_test', type=str)
-    parser.add_argument('--packed_pkl', type=str)
+    parser.add_argument('--sketch_dir', type=str)
+    parser.add_argument('--image_dir', type=str)
+    parser.add_argument('--stats_file', type=str)
+    parser.add_argument('--packed_pkl_zs', type=str)
+    parser.add_argument('--packed_pkl_nozs', type=str)
     parser.add_argument('--log_file', type=str)
     parser.add_argument('--image_normalize', action='store_true')
     parser.add_argument('--shuffle', action='store_true')
@@ -28,5 +26,6 @@ def parse_config():
     parser.add_argument('--start_from', type=str, default=None)
     parser.add_argument('--save_dir', type=str)
     parser.add_argument('--gpu_id', type=int, default=0)
+    parser.add_argument('--zs', action='store_true')
 
     return parser.parse_args()

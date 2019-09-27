@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset as torchDataset
-from torchvision.transforms import Normalize
+from torchvision.transforms import Normalize, ToTensor
 
 from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE_SIZE
 
@@ -20,10 +20,11 @@ class Siamese_dataloader(torchDataset):
         self.stats_file = stats_file
         self.normalize = normalize
         self.loaded_data = loaded_data
+        self.ToTensor = ToTensor()
         self.Normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         self.train_class = TRAIN_CLASS
         self.test_class = TEST_CLASS
-        self.overall_class = self.train_class + self.test_class
+        self.overall_class = self.train_class | self.test_class
         self.zs = zs
         self.class2path_sketch = dict() # class: set(path) | for sketch | for train
         self.class2path_image = dict() # class: set(path) | for image | for train
@@ -36,7 +37,7 @@ class Siamese_dataloader(torchDataset):
         self.id2path = list() # path list corresponding to path2class_sketch 
         self.loaded_image = dict() # path: loaded image 
         self.load()
-    
+
     def __getitem__(self, index):
         sketch = self.load_each_image_use(self.id2path[int(index/2)])
         label = np.zeros(1)
@@ -50,7 +51,7 @@ class Siamese_dataloader(torchDataset):
 
     def __len__(self):
         return 2*len(self.id2path)
-    
+
     def pair_similar(self, cls):
         path_list = list(self.class2path_image[cls])
         path = random.choice(path_list)
@@ -63,20 +64,19 @@ class Siamese_dataloader(torchDataset):
         path_list = list(self.class2path_image[choice])
         path = random.choice(path_list)
         return self.load_each_image_use(path), path
-    
+
     def load_each_image_use(self, path):
-        if path in self.loaded_image:
-            image = self.loaded_image[path]
-        else:
-            image = cv2.imread(path)
-            if image.shape[2] == 1:
-                image = np.concatenate([image, image, image], 2)
-            if image.shape != (IMAGE_SIZE, IMAGE_SIZE, 3):
-                image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
-            self.loaded_image[path] = image
-        image = image.reshape(3, IMAGE_SIZE, IMAGE_SIZE).astype(np.float32)
-        image = torch.Tensor(image)
-        image = image/255.0
+        #if path in self.loaded_image:
+        #    image = self.loaded_image[path]
+        #else:
+        #    image = cv2.imread(path)
+        #    self.loaded_image[path] = image
+        image = cv2.imread(path)
+        if image.shape[2] == 1:
+            image = np.concatenate([image, image, image], 2)
+        if image.shape != (IMAGE_SIZE, IMAGE_SIZE, 3):
+            image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+        image = self.ToTensor(image)
         image = self.Normalize(image)
         return image
 
@@ -91,13 +91,37 @@ class Siamese_dataloader(torchDataset):
                 ims = []
                 label = []
         yield torch.stack(ims), label
-    
+
     def load_test_sketch(self, batch_size=512):
         ims = []
         label = []
         for path in self.path2class_sketch_test.keys():
             ims.append(self.load_each_image_use(path))
             label.append(self.path2class_sketch_test[path])
+            if len(ims) == batch_size:
+                yield torch.stack(ims), label
+                ims = []
+                label = []
+        yield torch.stack(ims), label
+
+    def load_train_images(self, batch_size=512):
+        ims = []
+        label = []
+        for path in self.path2class_image.keys():
+            ims.append(self.load_each_image_use(path))
+            label.append(self.path2class_image[path])
+            if len(ims) == batch_size:
+                yield torch.stack(ims), label
+                ims = []
+                label = []
+        yield torch.stack(ims), label
+
+    def load_train_sketch(self, batch_size=512):
+        ims = []
+        label = []
+        for path in self.path2class_sketch.keys():
+            ims.append(self.load_each_image_use(path))
+            label.append(self.path2class_sketch[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
                 ims = []
@@ -155,8 +179,8 @@ class Siamese_dataloader(torchDataset):
                     random.shuffle(sketch_cla_dir)
                     train_im = image_cla_dir[:int(0.5*len(image_cla_dir))]
                     test_im = image_cla_dir[int(0.5*len(image_cla_dir)):]
-                    train_sk = image_cla_dir[:int(0.5*len(sketch_cla_dir))]
-                    test_sk = image_cla_dir[int(0.5*len(sketch_cla_dir)):]
+                    train_sk = sketch_cla_dir[:int(0.5*len(sketch_cla_dir))]
+                    test_sk = sketch_cla_dir[int(0.5*len(sketch_cla_dir)):]
                     self.class2path_image[cla] = train_im
                     self.class2path_sketch[cla] = train_sk
                     self.class2path_image_test[cla] = test_im
@@ -170,7 +194,7 @@ class Siamese_dataloader(torchDataset):
                         self.path2class_image_test[path] = cla
                     for path in test_sk:
                         self.path2class_sketch_test[path] = cla
-        
+
         assert len(self.path2class_sketch.keys()) == len(self.id2path)
         preloaded_data = dict()
         # Train part
@@ -184,7 +208,7 @@ class Siamese_dataloader(torchDataset):
         preloaded_data['class2path_image_test'] = self.class2path_image_test
         preloaded_data['path2class_sketch_test'] = self.path2class_sketch_test
         preloaded_data['path2class_image_test'] = self.path2class_image_test
-        
+
         with open(self.loaded_data, 'wb') as f:
             pickle.dump(preloaded_data, f)
         return

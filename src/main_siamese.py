@@ -29,13 +29,14 @@ def update_lr(optimizer, lr):
 def train(args):
     writer = SummaryWriter()
     logger = make_logger(args.log_file)
-    
+
     if args.zs:
         packed = args.packed_pkl_zs
     else:
         packed = args.packed_pkl_nozs
 
-    data = Siamese_dataloader(args.sketch_dir, args.image_dir, args.stats_file, packed, args.zs)
+    data = Siamese_dataloader(args.sketch_dir, args.image_dir, args.stats_file, packed, zs=args.zs)
+    print(len(data))
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -43,7 +44,8 @@ def train(args):
     logger.info('Building the model ...')
     model = Siamese(args.margin, args.loss_type, args.distance_type, batch_normalization=False, from_pretrain=True, logger=logger)
     logger.info('Building the optimizer ...')
-    optimizer = Adam(params=model.parameters(), lr=args.lr)
+    #optimizer = Adam(params=model.parameters(), lr=args.lr)
+    optimizer = SGD(params=model.parameters(), lr=args.lr, momentum=0.9)
     siamese_loss = _Siamese_loss()
     l1_regularization = _Regularization(model, 0.1, p=1, logger=logger)
     l2_regularization = _Regularization(model, 1e-4, p=2, logger=logger)
@@ -57,6 +59,7 @@ def train(args):
         model.cuda(args.gpu_id)
 
     batch_acm = 0
+    global_step = 0
     loss_siamese_acm, sim_acm, dis_sim_acm, loss_l1_acm, loss_l2_acm = 0., 0., 0., 0., 0.,
     best_precision = 0.
     best_iter = 0
@@ -70,18 +73,21 @@ def train(args):
         if patience <= 0:
             break
         for sketch_batch, image_batch, label_batch in dataloader_train:
-            if batch_acm % args.print_every == 0 % args.print_every:
-                logger.info('Iter {}, Loss/siamese {:.3f}, Loss/l1 {:.3f}, Loss/l2 {:.3f}, Siamese/sim {:.3f}, Siamese/dis_sim {:.3f}'.format(batch_acm, \
-                             loss_siamese_acm/args.print_every, loss_l1_acm/args.print_every, \
-                             loss_l2_acm/args.print_every, sim_acm/args.print_every, \
-                             dis_sim_acm/args.print_every))
+            if global_step % args.print_every == 0 % args.print_every and global_step and batch_acm % args.cum_num == 0:
+                logger.info('Iter {}, Loss/siamese {:.3f}, Loss/l1 {:.3f}, Loss/l2 {:.3f}, Siamese/sim {:.3f}, Siamese/dis_sim {:.3f}'.format(global_step, \
+                             loss_siamese_acm/args.print_every/args.cum_num, \
+                             loss_l1_acm/args.print_every/args.cum_num, \
+                             loss_l2_acm/args.print_every/args.cum_num, \
+                             sim_acm/args.print_every/args.cum_num, \
+                             dis_sim_acm/args.print_every/args.cum_num))
                 loss_siamese_acm, sim_acm, dis_sim_acm, loss_l1_acm, loss_l2_acm = 0., 0., 0., 0., 0.,
 
-            if batch_acm % args.save_every == 0 % args.save_every:
+            if global_step % args.save_every == 0 % args.save_every and batch_acm % args.cum_num == 0 and global_step :
                 if not os.path.exists(args.save_dir):
                     os.mkdir(args.save_dir)
                 torch.save({'args':args, 'model':model.state_dict(), \
-                        'optimizer':optimizer.state_dict()}, '{}/Iter_{}.pkl'.format(args.save_dir,batch_acm))
+                        'optimizer':optimizer.state_dict()},
+                        '{}/Iter_{}.pkl'.format(args.save_dir,global_step))
 
                 ### Evaluation
                 model.eval()
@@ -89,7 +95,6 @@ def train(args):
                 image_label = list()
                 image_feature = list()
                 for image, label in data.load_test_images(batch_size=args.batch_size):
-                    shape = image.shape
                     image = image.cuda(args.gpu_id)
                     image_label += label
                     tmp_feature = model.get_feature(image).cpu().detach().numpy()
@@ -99,7 +104,6 @@ def train(args):
                 sketch_label = list()
                 sketch_feature = list()
                 for sketch, label in data.load_test_sketch(batch_size=args.batch_size):
-                    shape = sketch.shape
                     sketch = sketch.cuda(args.gpu_id)
                     sketch_label += label
                     tmp_feature = model.get_feature(sketch).cpu().detach().numpy()
@@ -107,32 +111,70 @@ def train(args):
                 sketch_feature = np.vstack(sketch_feature)
 
                 dists_cosine = cdist(image_feature, sketch_feature, 'cosine')
+                print(dists_cosine.shape)
                 dists_euclid = cdist(image_feature, sketch_feature, 'euclidean')
 
                 rank_cosine = np.argsort(dists_cosine, 0)
                 rank_euclid = np.argsort(dists_euclid, 0)
 
-                for n in [5, 20, 100, 200]:
+                # train eval
+                #image_label_train = list()
+                #image_feature = list()
+                #for image, label in data.load_train_images(batch_size=args.batch_size):
+                #    image = image.cuda(args.gpu_id)
+                #    image_label_train += label
+                #    tmp_feature = model.get_feature(image).cpu().detach().numpy()
+                #    image_feature.append(tmp_feature)
+                #image_feature = np.vstack(image_feature)
+
+                #sketch_label_train = list()
+                #sketch_feature = list()
+                #for sketch, label in data.load_train_sketch(batch_size=args.batch_size):
+                #    sketch = sketch.cuda(args.gpu_id)
+                #    sketch_label_train += label
+                #    tmp_feature = model.get_feature(sketch).cpu().detach().numpy()
+                #    sketch_feature.append(tmp_feature)
+                #sketch_feature = np.vstack(sketch_feature)
+
+                #dists_cosine_train = cdist(image_feature, sketch_feature, 'cosine')
+                #print(dists_cosine_train.shape)
+
+                #rank_cosine_train = np.argsort(dists_cosine_train, 0)
+
+                for n in [5, 200]:
                     ranksn_cosine = rank_cosine[:n, :].T
                     ranksn_euclid = rank_euclid[:n, :].T
+                    #ranksn_cosine_train = rank_cosine_train[:n, :].T
 
                     classesn_cosine = np.array([[image_label[i] == sketch_label[r] \
                                                 for i in ranksn_cosine[r]] for r in range(len(ranksn_cosine))])
                     classesn_euclid = np.array([[image_label[i] == sketch_label[r] \
                                                 for i in ranksn_euclid[r]] for r in range(len(ranksn_euclid))])
+                    #classesn_cosine_train = np.array([[image_label_train[i] == sketch_label_train[r] \
+                    #                            for i in ranksn_cosine_train[r]] for r in range(len(ranksn_cosine_train))])
+
 
                     precision_cosine = np.mean(classesn_cosine)
                     precision_euclid = np.mean(classesn_euclid)
-                    writer.add_scalar('Precision_{}/cosine'.format(n), precision_cosine, batch_acm)
-                    writer.add_scalar('Precision_{}/euclid'.format(n), precision_euclid, batch_acm)
-                    logger.info('Iter {}, Precision_{}/cosine {}'.format(batch_acm, n, precision_cosine))
-                    logger.info('Iter {}, Precision_{}/euclid {}'.format(batch_acm, n, precision_euclid))
+                    #precision_cosine_train = np.mean(classesn_cosine_train)
+
+                    writer.add_scalar('Precision_{}/cosine'.format(n),
+                            precision_cosine, global_step)
+                    writer.add_scalar('Precision_{}/euclid'.format(n),
+                            precision_euclid, global_step)
+                    #writer.add_scalar('Precision_{}/cosine_train'.format(n),
+                    #        precision_cosine_train, global_step)
+
+                    logger.info('Iter {}, Precision_{}/cosine {}'.format(global_step, n, precision_cosine))
+                    logger.info('Iter {}, Precision_{}/euclid {}'.format(global_step, n, precision_euclid))
+                    #logger.info('Iter {}, Precision_{}/cosine_train {}'.format(global_step, n, precision_cosine_train))
+
                 if best_precision < precision_cosine:
                     patience = args.patience
                     best_precision = precision_cosine
-                    best_iter = batch_acm
+                    best_iter = global_step
                     writer.add_scalar('Best/Precision_200', best_precision, best_iter)
-                    logger.info('Iter {}, Best Precision_200 {}'.format(batch_acm, best_precision))
+                    logger.info('Iter {}, Best Precision_200 {}'.format(global_step, best_precision))
                     torch.save({'args':args, 'model':model.state_dict(), \
                         'optimizer':optimizer.state_dict()}, '{}/Best.pkl'.format(args.save_dir))
                 else:
@@ -142,8 +184,8 @@ def train(args):
 
             model.train()
             batch_acm += 1
-            if batch_acm <= args.warmup_steps:
-                update_lr(optimizer, args.lr*batch_acm/args.warmup_steps)
+            if global_step <= args.warmup_steps:
+                update_lr(optimizer, args.lr*global_step/args.warmup_steps)
             """
             #code for testing if the images and the sketches are corresponding to each other correctly
 
@@ -170,16 +212,19 @@ def train(args):
             dis_sim_acm += dis_sim.item()
             loss_l1_acm += loss_l1.item()
             loss_l2_acm += loss_l2.item()
-            writer.add_scalar('Loss/Siamese', loss_siamese.item(), batch_acm)
-            writer.add_scalar('Loss/L1', loss_l1.item(), batch_acm)
-            writer.add_scalar('Loss/L2', loss_l2.item(), batch_acm)
-            writer.add_scalar('Siamese/Similar', sim.item(), batch_acm)
-            writer.add_scalar('Siamese/Dis-Similar', dis_sim.item(), batch_acm)
+            writer.add_scalar('Loss/Siamese', loss_siamese.item(), global_step)
+            writer.add_scalar('Loss/L1', loss_l1.item(), global_step)
+            writer.add_scalar('Loss/L2', loss_l2.item(), global_step)
+            writer.add_scalar('Siamese/Similar', sim.item(), global_step)
+            writer.add_scalar('Siamese/Dis-Similar', dis_sim.item(), global_step)
             loss = loss_siamese + loss_l2
             loss.backward()
+            #print(loss_siamese.item())
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+            if batch_acm % args.cum_num == 0:
+                optimizer.step()
+                global_step += 1
 
             #print(loss_siamese.item())
 

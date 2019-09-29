@@ -6,8 +6,8 @@ python ./src/main_siamese.py  --sketch_dir /home/jiangtongli/Lab_Work/ZS-SBIR/da
                               --log_file /home/jiangtongli/Lab_Work/ZS-SBIR/log/run4.log \
                               --shuffle \
                               --mode 0 \
-                              --margin 200 \
-                              --loss_type 0 \
+                              --margin 300 \
+                              --loss_type 1 \
                               --distance_type 0 \
                               --patience 10 \
                               --batch_size 32 \

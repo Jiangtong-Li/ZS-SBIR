@@ -47,6 +47,8 @@ class VGG(nn.Module):
                 nn.Dropout(0.5),
                 nn.Linear(4096, 4096)
             )
+        elif return_type == 2:
+            self.classifier = None
         else:
             raise ValueError('The return_type should between {0, 1}')
 
@@ -57,8 +59,9 @@ class VGG(nn.Module):
     def forward(self, x):
         x = self.features(x)
         x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.classifier(x)
+        if self.classifier is not None:
+            x = torch.flatten(x, 1)
+            x = self.classifier(x)
         return x
 
     def _initialize_weights(self):

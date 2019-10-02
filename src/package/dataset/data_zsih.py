@@ -198,6 +198,7 @@ class ZSIH_dataloader(torchDataset):
             if item not in word2vec:
                 item = SEMANTICS_REPLACE[item]
             self.pretrain_embedding[idx] = word2vec[item]
+        self.pretrain_embedding = torch.from_numpy(self.pretrain_embedding)
         
         assert len(self.id2class) == 125
         assert len(self.path2class_sketch.keys()) == len(self.id2path)

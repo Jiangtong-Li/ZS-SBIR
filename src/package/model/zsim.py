@@ -7,7 +7,7 @@ from package.model.gcn import GCN_ZSIH
 from package.loss.regularization import _Regularization
 
 class ZSIM(nn.Module):
-    def __init__(self, hidden_size, hashing_bit, semantices_size, pretrain_embedding, adj_scaler=0.1, dropout=0.5, from_pretrain=True, fix_cnn=True, fix_embedding=True):
+    def __init__(self, hidden_size, hashing_bit, semantics_size, pretrain_embedding, adj_scaler=1, dropout=0.5, from_pretrain=True, fix_cnn=True, fix_embedding=True, logger=None):
         super(ZSIM, self).__init__()
         # hyper-param
         self.hidden_size = hidden_size
@@ -16,12 +16,12 @@ class ZSIM(nn.Module):
         self.dropout = dropout
         self.from_pretrain = from_pretrain
         self.fix_cnn = fix_cnn
+        self.logger = logger
 
         # model
         self.semantics = nn.Embedding.from_pretrained(pretrain_embedding)
         if fix_embedding:
-            for param in self.semantics:
-                param.requires_grad = False
+            self.semantics.weight.requires_grad=False
         self.backbone = vgg16(pretrained=from_pretrain, return_type=2)
         if fix_cnn:
             for param in self.backbone.parameters():
@@ -34,8 +34,8 @@ class ZSIM(nn.Module):
         self.image_linear2 = nn.Linear(hidden_size, hashing_bit)
         self.gcn = GCN_ZSIH(512*512, hidden_size, hashing_bit, dropout, adj_scaler)
         self.doubly_sn = Doubly_SN()
-        self.mean_linear = nn.Linear(hashing_bit, semantices_size)
-        self.var_linear = nn.Linear(hashing_bit, semantices_size)
+        self.mean_linear = nn.Linear(hashing_bit, semantics_size)
+        self.var_linear = nn.Linear(hashing_bit, semantics_size)
 
         # activation function
         self.relu = nn.ReLU(inplace=True)
@@ -53,11 +53,12 @@ class ZSIM(nn.Module):
         semantices [batch_size, 1]
         """
         # get embedding
-        semantics = self.embedding(semantics)
+        semantics = self.semantics(semantics)
+        semantics = semantics.squeeze()
 
         # recode the batch information
         batch_size = sketch.shape[0]
-        semantics_size = semantics.shape[1]
+        _semantics_size = semantics.shape[1]
 
         # encode the sketch
         feat_sketch = self.backbone(sketch) # [bs, 512, 7, 7]
@@ -78,13 +79,15 @@ class ZSIM(nn.Module):
         gcn_out = self.gcn(fusion, semantics) # [bs, hb]
 
         # VAE sampling
+        # eps = torch.ones([batch_size, self.hashing_bit]).to(sketch.device) * 0.5
         eps = torch.rand([batch_size, self.hashing_bit]).to(sketch.device)
         codes = self.doubly_sn(gcn_out, eps) # [bs, hb]
         dec_mean = self.mean_linear(codes) # [bs, semantics_size]
-        dec_var = self.mean_linear(codes) # [bs, semantics_size]
+        _dec_var = self.mean_linear(codes) # [bs, semantics_size]
         
         # calculate loss
         loss = self.loss(enc_sketch, enc_image, gcn_out, codes, dec_mean, semantics)
+        return loss
 
     def kronecker(self, feat1, feat2):
         batch_size = feat1.shape[0]
@@ -95,25 +98,27 @@ class ZSIM(nn.Module):
     
     def loss(self, enc_sketch, enc_image, codes_logits, codes, dec_mean, semantics):
         p_xz = self.l2(dec_mean, semantics)
-        q_zx = self.bce(codes_logits, codes)
+        no_grad_code = codes.detach()
+        q_zx = self.bce(codes_logits, no_grad_code)
 
-        loss_image = self.l2(enc_image, codes)
-        loss_sketch = self.l2(enc_sketch, codes)
+        loss_image = self.l2(enc_image, no_grad_code)
+        loss_sketch = self.l2(enc_sketch, no_grad_code)
         loss = dict()
-        loss['p_xz'] = p_xz
-        loss['q_zx'] = q_zx
-        loss['image_l2'] = loss_image
-        loss['sketch_l2'] = loss_sketch
+        loss['p_xz'] = (p_xz, 0.5)
+        loss['q_zx'] = (q_zx, 1.0)
+        loss['image_l2'] = (loss_image, 1.0)
+        loss['sketch_l2'] = (loss_sketch, 1.0)
         return loss
     
     def hash(self, figure):
-        batch_size = figure.shape[0]
+        _batch_size = figure.shape[0]
         feat_figure = self.backbone(figure) # [bs, 512, 7, 7]
         att_figure = self.sketch_attention(feat_figure) # [bs, 512]
         fc_figure = self.relu(self.sketch_linear1(att_figure)) # [bs, hs]
         enc_figure = self.sigmoid(self.sketch_linear2(fc_figure)) # [bs, hb]
 
         yout = (torch.sign(enc_figure - 0.5) + 1.0) / 2.0
+        return yout
 
 class Doubly_SN(nn.Module):
     def __init__(self):

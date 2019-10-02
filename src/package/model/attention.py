@@ -4,10 +4,10 @@ import torch.nn as nn
 class CNN_attention(nn.Module):
     def __init__(self, channel_size):
         super(CNN_attention, self).__init__()
-        self.attention = nn.Conv2d(channel_size, 1, kernel_size=1)
+        self.attention = nn.Conv2d(channel_size, channel_size, kernel_size=1)
         self.softmax = nn.Softmax(dim=1)
         self._initialize_weights()
-    
+
     def forward(self, conv_feature):
         # conv_feature: [batch_size, channel_size, height, width]
         conv_shape = conv_feature.shape
@@ -20,7 +20,7 @@ class CNN_attention(nn.Module):
         weighted_conv_feature = att_weight * conv_feature
         weighted_conv_feature = weighted_conv_feature.mean([2, 3])
         return weighted_conv_feature
-    
+
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

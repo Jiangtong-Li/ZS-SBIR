@@ -23,11 +23,12 @@ class GCN_ZSIH(nn.Module):
     def forward(self, x, semantics):
         """
         x [batch_size, concat_size]
+        semantics [batch_size, semantics_size]
         """
         adj = self.build_adj(semantics)
         adj = self.graph_laplacian(adj)
-        x = self.dropout(self.relu(self.gc1(x, adj)))
-        x = self.dropout(self.sigmoid(self.gc2(x, adj)))
+        x = self.relu(self.dropout(self.gc1(x, adj)))
+        x = self.sigmoid(self.dropout(self.gc2(x, adj)))
         return x
     
     def build_adj(self, x):
@@ -41,7 +42,7 @@ class GCN_ZSIH(nn.Module):
         a = adj
         d = a @ torch.ones([graph_size, 1]).to(adj.device)
         d_inv_sqrt = torch.pow(d + 1e-8, -0.5)
-        d_inv_sqrt = torch.eye(graph_size) * d_inv_sqrt
+        d_inv_sqrt = torch.eye(graph_size).to(adj.device) * d_inv_sqrt
         laplacian = d_inv_sqrt @ a @ d_inv_sqrt
         return laplacian
 

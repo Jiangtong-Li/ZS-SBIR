@@ -1,0 +1,26 @@
+python ./src/main_zsih.py  --sketch_dir /home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/sketch/tx_000100000000 \
+                           --image_dir /home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/EXTEND_image_sketchy \
+                           --stats_file /home/jiangtongli/Lab_Work/ZS-SBIR/data/info/stats.csv \
+                           --packed_pkl_nozs /home/jiangtongli/Lab_Work/ZS-SBIR/data/preprocessed/nozs_zsih_packed.pkl \
+                           --packed_pkl_zs /home/jiangtongli/Lab_Work/ZS-SBIR/data/preprocessed/zs_zsih_packed.pkl \
+                           --embedding_file /home/jiangtongli/Lab_Work/ZS-SBIR/data/GoogleNews-vectors-negative300.bin \
+                           --log_file /home/jiangtongli/Lab_Work/ZS-SBIR/log/zsih_test1.log \
+                           --shuffle \
+                           --hidden_size 1024 \
+                           --hashing_bit 128 \
+                           --semantics_size 300 \
+                           --adj_scaler 1.0 \
+                           --fix_cnn \
+                           --fix_embedding \
+                           --patience 10 \
+                           --batch_size 64 \
+                           --num_worker 16 \
+                           --dropout 0.5 \
+                           --warmup_steps 500 \
+                           --lr 1e-5 \
+                           --print_every 50 \
+                           --save_every 500 \
+                           --save_dir /home/jiangtongli/Lab_Work/ZS-SBIR/model/zsih_test1/ \
+                           --gpu_id 0 \
+                           --cum_num 2 \
+                           --zs

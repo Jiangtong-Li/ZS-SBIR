@@ -32,7 +32,7 @@ class _Regularization(nn.Module):
         '''
         weight_list = []
         for name, param in model.named_parameters():
-            if 'weight' in name:
+            if 'weight' in name and param.requires_grad == True:
                 weight = (name, param)
                 weight_list.append(weight)
         return weight_list

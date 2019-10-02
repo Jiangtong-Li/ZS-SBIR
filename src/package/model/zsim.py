@@ -1,5 +1,8 @@
+import time
+
 import torch
 import torch.nn as nn
+from torch.autograd.function import once_differentiable
 
 from package.model.vgg import vgg16, vgg16_bn
 from package.model.attention import CNN_attention
@@ -33,7 +36,7 @@ class ZSIM(nn.Module):
         self.image_linear1 = nn.Linear(512, hidden_size)
         self.image_linear2 = nn.Linear(hidden_size, hashing_bit)
         self.gcn = GCN_ZSIH(512*512, hidden_size, hashing_bit, dropout, adj_scaler)
-        self.doubly_sn = Doubly_SN()
+        self.doubly_sn = Doubly_SN_Function.apply
         self.mean_linear = nn.Linear(hashing_bit, semantics_size)
         self.var_linear = nn.Linear(hashing_bit, semantics_size)
 
@@ -65,25 +68,33 @@ class ZSIM(nn.Module):
         att_sketch = self.sketch_attention(feat_sketch) # [bs, 512]
         fc_sketch = self.relu(self.sketch_linear1(att_sketch)) # [bs, hs]
         enc_sketch = self.sigmoid(self.sketch_linear2(fc_sketch)) # [bs, hb]
+        #distrub = torch.normal(0, 1e-4, enc_sketch.shape).to(enc_sketch.device)
+        enc_sketch = enc_sketch
 
         # encode the image
         feat_image = self.backbone(image) # [bs, 512, 7, 7]
-        att_image = self.sketch_attention(feat_image) # [bs, 512]
+        att_image = self.image_attention(feat_image) # [bs, 512]
         fc_image = self.relu(self.image_linear1(att_image)) # [bs, hs]
         enc_image = self.sigmoid(self.image_linear2(fc_image)) # [bs, hb]
+        #distrub = torch.normal(0, 1e-4, enc_image.shape).to(enc_image.device)
+        enc_image = enc_image
 
         # kronecker product
-        fusion = self.kronecker(att_sketch, att_sketch) # [bs, 512*512]
+        fusion = self.kronecker(att_sketch, att_image) # [bs, 512*512]
 
         # gcn semantics representation
-        gcn_out = self.gcn(fusion, semantics) # [bs, hb]
+        gcn_out_1 = self.gcn(fusion, semantics) # [bs, hb]
+        #distrub = torch.normal(0, 1e-4, gcn_out.shape).to(gcn_out.device)
+        gcn_out = self.sigmoid(gcn_out_1)
 
         # VAE sampling
-        # eps = torch.ones([batch_size, self.hashing_bit]).to(sketch.device) * 0.5
-        eps = torch.rand([batch_size, self.hashing_bit]).to(sketch.device)
-        codes = self.doubly_sn(gcn_out, eps) # [bs, hb]
+        eps_one = torch.ones([batch_size, self.hashing_bit]).to(sketch.device) * 0.5
+        eps_rand = torch.rand([batch_size, self.hashing_bit]).to(sketch.device)
+        codes_one = self.doubly_sn(gcn_out, eps_one) # [bs, hb]
+        codes_rand = self.doubly_sn(gcn_out, eps_rand)
+        codes = codes_rand
         dec_mean = self.mean_linear(codes) # [bs, semantics_size]
-        _dec_var = self.mean_linear(codes) # [bs, semantics_size]
+        _dec_var = self.var_linear(codes) # [bs, semantics_size]
         
         # calculate loss
         loss = self.loss(enc_sketch, enc_image, gcn_out, codes, dec_mean, semantics)
@@ -104,7 +115,7 @@ class ZSIM(nn.Module):
         loss_image = self.l2(enc_image, no_grad_code)
         loss_sketch = self.l2(enc_sketch, no_grad_code)
         loss = dict()
-        loss['p_xz'] = (p_xz, 0.5)
+        loss['p_xz'] = (p_xz, 0.1)
         loss['q_zx'] = (q_zx, 1.0)
         loss['image_l2'] = (loss_image, 1.0)
         loss['sketch_l2'] = (loss_sketch, 1.0)
@@ -120,15 +131,14 @@ class ZSIM(nn.Module):
         yout = (torch.sign(enc_figure - 0.5) + 1.0) / 2.0
         return yout
 
-class Doubly_SN(nn.Module):
-    def __init__(self):
-        super(Doubly_SN, self).__init__()
-    
-    def forward(self, logits, epsilon):
+class Doubly_SN_Function(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, logits, epsilon):
+        ctx.save_for_backward(logits)
         yout = (torch.sign(logits - epsilon) + 1.0) / 2.0
         return yout
-    
-    def backward(self, logits, epsilon, dprev):
-        dlogits = logits * (1 - logits) * dprev
-        depsilon = dprev
-        return dlogits, depsilon
+    @staticmethod
+    def backward(ctx, grad_output):
+        logits, = ctx.saved_tensors
+        grad_input = logits * (1 - logits) * grad_output
+        return grad_input, grad_input

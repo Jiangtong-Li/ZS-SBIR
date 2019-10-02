@@ -9,18 +9,18 @@ python ./src/main_zsih.py  --sketch_dir /home/jiangtongli/Lab_Work/ZS-SBIR/data/
                            --hidden_size 1024 \
                            --hashing_bit 128 \
                            --semantics_size 300 \
-                           --adj_scaler 1.0 \
+                           --adj_scaler 10 \
                            --fix_cnn \
                            --fix_embedding \
                            --patience 10 \
-                           --batch_size 64 \
+                           --batch_size 100 \
                            --num_worker 16 \
                            --dropout 0.5 \
                            --warmup_steps 500 \
-                           --lr 1e-5 \
+                           --lr 1e-4 \
                            --print_every 50 \
                            --save_every 500 \
                            --save_dir /home/jiangtongli/Lab_Work/ZS-SBIR/model/zsih_test1/ \
                            --gpu_id 0 \
-                           --cum_num 2 \
+                           --cum_num 3 \
                            --zs

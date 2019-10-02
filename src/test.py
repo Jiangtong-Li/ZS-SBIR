@@ -11,8 +11,8 @@ data = ZSIH_dataloader('/home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/sketch/t
                           '/home/jiangtongli/Lab_Work/ZS-SBIR/data/GoogleNews-vectors-negative300.bin',
                           '/home/jiangtongli/Lab_Work/ZS-SBIR/data/preprocessed/zsim_packed.pkl',
                           zs=True)
-dataLoader = DataLoader(dataset=data, batch_size=3, num_workers=20,
-        shuffle=True)
+dataLoader = DataLoader(dataset=data, batch_size=64, num_workers=16,
+        shuffle=False)
 
 model = ZSIM(1024, 128, 300, data.pretrain_embedding.float())
 optimizer = SGD(params=model.parameters(), lr=0.001, momentum=0.9)
@@ -38,11 +38,11 @@ for sketch, image, semantics in dataLoader:
     #    ims = np.vstack((np.uint8(sk), np.uint8(im)))
     #    cv2.imshow('test', ims)
     #    cv2.waitKey(3000)
-    semantics = semantics.long()
-    _loss = model(sketch, image, semantics)
-    loss = 0
-    for key, value in _loss.items():
-        loss += value[0] * value[1]
-    loss.backward()
-    optimizer.step()
-    break
+    #semantics = semantics.long()
+    #_loss = model(sketch, image, semantics)
+    #loss = 0
+    #for key, value in _loss.items():
+    #    loss += value[0] * value[1]
+    #loss.backward()
+    #optimizer.step()
+    #break

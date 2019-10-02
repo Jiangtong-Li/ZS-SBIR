@@ -61,8 +61,11 @@ class ZSIH_dataloader(torchDataset):
 
     def load_each_image_use(self, path):
         image = cv2.imread(path)
-        if image.shape[2] == 1:
-            image = np.concatenate([image, image, image], 2)
+        try:
+            if image.shape[2] == 1:
+                image = np.concatenate([image, image, image], 2)
+        except:
+            print(path)
         if image.shape != (IMAGE_SIZE, IMAGE_SIZE, 3):
             image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
         image = self.ToTensor(image)

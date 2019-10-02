@@ -178,7 +178,7 @@ def train(args):
             writer.add_scalar('Loss/reg_l2', (loss_l2.item() / 0.005), global_step)
             writer.add_scalar('Loss/reg_l1', loss_l1.item(), global_step)
             
-            loss_ = 0#loss_l2
+            loss_ = loss_l2
             for item in loss.values():
                 loss_ += item[0]*item[1]
             loss_.backward()

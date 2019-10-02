@@ -28,7 +28,7 @@ class GCN_ZSIH(nn.Module):
         adj = self.build_adj(semantics)
         adj = self.graph_laplacian(adj)
         x = self.relu(self.dropout(self.gc1(x, adj)))
-        x = self.sigmoid(self.dropout(self.gc2(x, adj)))
+        x = self.gc2(x, adj)
         return x
     
     def build_adj(self, x):

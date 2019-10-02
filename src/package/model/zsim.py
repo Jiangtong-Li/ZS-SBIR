@@ -7,7 +7,7 @@ from package.model.gcn import GCN_ZSIH
 from package.loss.regularization import _Regularization
 
 class ZSIM(nn.Module):
-    def __init__(self, hidden_size, hashing_bit, semantices_size, adj_scaler=0.1, dropout=0.5, from_pretrain=True, fix_cnn=True):
+    def __init__(self, hidden_size, hashing_bit, semantices_size, pretrain_embedding, adj_scaler=0.1, dropout=0.5, from_pretrain=True, fix_cnn=True, fix_embedding=True):
         super(ZSIM, self).__init__()
         # hyper-param
         self.hidden_size = hidden_size
@@ -18,6 +18,10 @@ class ZSIM(nn.Module):
         self.fix_cnn = fix_cnn
 
         # model
+        self.semantics = nn.Embedding.from_pretrained(pretrain_embedding)
+        if fix_embedding:
+            for param in self.semantics:
+                param.requires_grad = False
         self.backbone = vgg16(pretrained=from_pretrain, return_type=2)
         if fix_cnn:
             for param in self.backbone.parameters():
@@ -40,15 +44,17 @@ class ZSIM(nn.Module):
 
         # loss function
         self.l2 = nn.MSELoss(reduction='mean')
-        self.cross_entropy = nn.KLDivLoss(reduction='mean')
-
+        self.bce = nn.BCELoss(reduction='mean')
     
     def forward(self, sketch, image, semantics):
         """
         sketch [batch_size, channel_size, H, W]
         image [batch_size, channel_size, H, W]
-        semantices [batch_size, hidden_size]
+        semantices [batch_size, 1]
         """
+        # get embedding
+        semantics = self.embedding(semantics)
+
         # recode the batch information
         batch_size = sketch.shape[0]
         semantics_size = semantics.shape[1]
@@ -69,17 +75,17 @@ class ZSIM(nn.Module):
         fusion = self.kronecker(att_sketch, att_sketch) # [bs, 512*512]
 
         # gcn semantics representation
-        gcn_out = self.gcn(fusion, semantics) #[bs, hb]
+        gcn_out = self.gcn(fusion, semantics) # [bs, hb]
 
         # VAE sampling
         eps = torch.rand([batch_size, self.hashing_bit]).to(sketch.device)
-        codes = self.doubly_sn(gcn_out, eps)
-        dec_mean = self.mean_linear(codes)
-        dec_var = self.mean_linear(codes)
+        codes = self.doubly_sn(gcn_out, eps) # [bs, hb]
+        dec_mean = self.mean_linear(codes) # [bs, semantics_size]
+        dec_var = self.mean_linear(codes) # [bs, semantics_size]
         
         # calculate loss
         loss = self.loss(enc_sketch, enc_image, gcn_out, codes, dec_mean, semantics)
-    
+
     def kronecker(self, feat1, feat2):
         batch_size = feat1.shape[0]
         feat1 = torch.unsqueeze(feat1, 2)
@@ -89,7 +95,7 @@ class ZSIM(nn.Module):
     
     def loss(self, enc_sketch, enc_image, codes_logits, codes, dec_mean, semantics):
         p_xz = self.l2(dec_mean, semantics)
-        q_zx = self.cross_entropy(codes_logits, codes)
+        q_zx = self.bce(codes_logits, codes)
 
         loss_image = self.l2(enc_image, codes)
         loss_sketch = self.l2(enc_sketch, codes)

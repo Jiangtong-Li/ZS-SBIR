@@ -32,6 +32,10 @@ TRAIN_CLASS = set(['squirrel', 'turtle', 'tiger', 'bicycle', \
 
 IMAGE_SIZE = 224
 
+SEMANTICS_REPLACE = dict([('car_(sedan)', 'car'), ('jack-o-lantern', 'pumpkin_lantern'), \
+                          ('wading_bird', 'bird'), ('hot-air_balloon','balloon'), \
+                          ('axe', 'hatchet'), ('wine_bottle', 'bottle')])
+
 def match_filename(pattern, listed_dir):
     return [f for f in listed_dir if re.match(pattern, f)]
 

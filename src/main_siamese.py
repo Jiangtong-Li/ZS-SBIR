@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from package.model.siamese import Siamese
 from package.loss.regularization import _Regularization
 from package.loss.siamese_loss import _Siamese_loss
-from package.dataset.data import Siamese_dataloader
+from package.dataset.data_siamese import Siamese_dataloader
 from package.args.siamese_args import parse_config
 from package.dataset.utils import make_logger
 

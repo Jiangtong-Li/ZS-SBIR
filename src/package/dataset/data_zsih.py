@@ -42,6 +42,7 @@ class ZSIH_dataloader(torchDataset):
         self.id2class = list() # semantics index to class name
         self.pretrain_embedding = np.zeros((len(list(self.train_class)) + len(list(self.test_class)), 300))
         self.load()
+        random.shuffle(self.id2path)
 
     def __getitem__(self, index):
         sketch = self.load_each_image_use(self.id2path[index])

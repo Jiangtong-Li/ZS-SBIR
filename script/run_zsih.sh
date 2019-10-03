@@ -9,7 +9,7 @@ python ./src/main_zsih.py  --sketch_dir /home/jiangtongli/Lab_Work/ZS-SBIR/data/
                            --hidden_size 1024 \
                            --hashing_bit 128 \
                            --semantics_size 300 \
-                           --adj_scaler 10 \
+                           --adj_scaler 0.1 \
                            --fix_cnn \
                            --fix_embedding \
                            --patience 10 \

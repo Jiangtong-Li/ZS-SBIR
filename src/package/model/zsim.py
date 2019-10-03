@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.autograd.function import once_differentiable
 
 from package.model.vgg import vgg16, vgg16_bn
-from package.model.attention import CNN_attention
+from package.model.attention import CNN_attention, attention
 from package.model.gcn import GCN_ZSIH
 from package.loss.regularization import _Regularization
 
@@ -25,7 +25,7 @@ class ZSIM(nn.Module):
         self.semantics = nn.Embedding.from_pretrained(pretrain_embedding)
         if fix_embedding:
             self.semantics.weight.requires_grad=False
-        self.backbone = vgg16(pretrained=from_pretrain, return_type=2)
+        self.backbone = vgg16(pretrained=from_pretrain, return_type=1)
         if fix_cnn:
             for param in self.backbone.parameters():
                 param.requires_grad = False
@@ -46,8 +46,8 @@ class ZSIM(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
         # loss function
-        self.l2 = nn.MSELoss(reduction='mean')
-        self.bce = nn.BCELoss(reduction='mean')
+        self.l2 = L2()
+        self.bce = CE()
     
     def forward(self, sketch, image, semantics):
         """
@@ -68,23 +68,18 @@ class ZSIM(nn.Module):
         att_sketch = self.sketch_attention(feat_sketch) # [bs, 512]
         fc_sketch = self.relu(self.sketch_linear1(att_sketch)) # [bs, hs]
         enc_sketch = self.sigmoid(self.sketch_linear2(fc_sketch)) # [bs, hb]
-        #distrub = torch.normal(0, 1e-4, enc_sketch.shape).to(enc_sketch.device)
-        enc_sketch = enc_sketch
 
         # encode the image
         feat_image = self.backbone(image) # [bs, 512, 7, 7]
         att_image = self.image_attention(feat_image) # [bs, 512]
         fc_image = self.relu(self.image_linear1(att_image)) # [bs, hs]
         enc_image = self.sigmoid(self.image_linear2(fc_image)) # [bs, hb]
-        #distrub = torch.normal(0, 1e-4, enc_image.shape).to(enc_image.device)
-        enc_image = enc_image
 
         # kronecker product
         fusion = self.kronecker(att_sketch, att_image) # [bs, 512*512]
 
         # gcn semantics representation
         gcn_out_1 = self.gcn(fusion, semantics) # [bs, hb]
-        #distrub = torch.normal(0, 1e-4, gcn_out.shape).to(gcn_out.device)
         gcn_out = self.sigmoid(gcn_out_1)
 
         # VAE sampling
@@ -121,12 +116,17 @@ class ZSIM(nn.Module):
         loss['sketch_l2'] = (loss_sketch, 1.0)
         return loss
     
-    def hash(self, figure):
+    def hash(self, figure, label):
         _batch_size = figure.shape[0]
         feat_figure = self.backbone(figure) # [bs, 512, 7, 7]
-        att_figure = self.sketch_attention(feat_figure) # [bs, 512]
-        fc_figure = self.relu(self.sketch_linear1(att_figure)) # [bs, hs]
-        enc_figure = self.sigmoid(self.sketch_linear2(fc_figure)) # [bs, hb]
+        if label == 0:
+            att_figure = self.sketch_attention(feat_figure) # [bs, 512]
+            fc_figure = self.relu(self.sketch_linear1(att_figure)) # [bs, hs]
+            enc_figure = self.sigmoid(self.sketch_linear2(fc_figure)) # [bs, hb]
+        else:
+            att_figure = self.image_attention(feat_figure) # [bs, 512]
+            fc_figure = self.relu(self.image_linear1(att_figure)) # [bs, hs]
+            enc_figure = self.sigmoid(self.image_linear2(fc_figure)) # [bs, hb]
 
         yout = (torch.sign(enc_figure - 0.5) + 1.0) / 2.0
         return yout
@@ -142,3 +142,17 @@ class Doubly_SN_Function(torch.autograd.Function):
         logits, = ctx.saved_tensors
         grad_input = logits * (1 - logits) * grad_output
         return grad_input, grad_input
+    
+class L2(nn.Module):
+    def __init__(self):
+        super(L2, self).__init__()
+
+    def forward(self, mat1, mat2):
+        return torch.mean(torch.pow(mat1-mat2, 2))
+
+class CE(nn.Module):
+    def __init__(self):
+        super(CE, self).__init__()
+    
+    def forward(self, mat1, mat2):
+        return -torch.mean(mat2*torch.log(mat1+1e-10)+(1-mat2)*torch.log((1-mat1+1e-10)))

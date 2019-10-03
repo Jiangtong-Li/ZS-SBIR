@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -98,7 +99,7 @@ def train(args):
                 for image, label in data.load_test_images(batch_size=args.batch_size):
                     image = image.cuda(args.gpu_id)
                     image_label += label
-                    tmp_feature = model.hash(image).cpu().detach().numpy()
+                    tmp_feature = model.hash(image, 1).cpu().detach().numpy()
                     image_feature.append(tmp_feature)
                 image_feature = np.vstack(image_feature)
 
@@ -107,7 +108,7 @@ def train(args):
                 for sketch, label in data.load_test_sketch(batch_size=args.batch_size):
                     sketch = sketch.cuda(args.gpu_id)
                     sketch_label += label
-                    tmp_feature = model.hash(sketch).cpu().detach().numpy()
+                    tmp_feature = model.hash(sketch, 0).cpu().detach().numpy()
                     sketch_feature.append(tmp_feature)
                 sketch_feature = np.vstack(sketch_feature)
 

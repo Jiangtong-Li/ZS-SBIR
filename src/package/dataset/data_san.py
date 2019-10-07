@@ -17,7 +17,6 @@ from package.dataset.utils import *
 import package.dataset.tv_functional as F
 
 
-
 join = os.path.join
 SK = 0
 IM = 1
@@ -27,10 +26,14 @@ IMAGE_SIZE = 225
 
 SKETCH_FOLDER_SKETCHY = 'G:/f/SJTUstudy/labNL/ZS_SBIR/256x256/sketch/tx_000000000010'
 IMAGE_FOLDER_SKETCHY = 'G:/f/SJTUstudy/labNL/ZS_SBIR/EXTEND_image_sketchy'
+PKL_FOLDER_SKETCHY = '../datasets/npy_sketchy'
+PKL_FOLDER_SKETCHY = 'G:/f/SJTUstudy/labNL/ZS_SBIR/pkl_sketchy'
+
 
 
 SKETCH_FOLDER_TUBERLIN = 'G:/f/SJTUstudy/labNL/SBIR_datasets/tuberlin/ImageResized'
 IMAGE_FOLDER_TUBERLIN = 'G:/f/SJTUstudy/labNL/SBIR_datasets/tuberlin/png'
+
 
 
 try:
@@ -78,11 +81,35 @@ class RandomShift(object):
         return self.__class__.__name__ + '(maxpix={0})'.format(self.maxpix)
 
 
+def npfn(fn):
+    if not fn.endswith('.npy'):
+        fn += '.npy'
+    return fn
+
+
 class SaN_dataloader(torchDataset):
     """
     ATTENTION: access to the dataset via the same index can result in different elements
     """
-    def __init__(self, folder_sk, folder_im, clss, normalize01=False, doaug=True, exp3ch=True):
+    def __init__(self, folder_sk, folder_im, clss, normalize01=False, doaug=True, exp3ch=True, folder_nps=None):
+        """
+        :param folder_sk: sketch folder
+        :param folder_im: image folder
+        :param clss: classes to load
+        :param normalize01: whether normalize data to 0-1
+        :param doaug: whether do data augmentation
+        :param exp3ch: whether force the sketches to expand to 3 channels
+        :param folder_nps: the folder that saves npy files. This allow fewer inodes to save the datasets(the server
+                    does not allow too many inodes allocated). The folder should contain
+                            classname1_sk.npy, classname1_im.npy,
+                            classname2_sk.npy, classname2_im.npy,
+                            ...
+                    1. If folder_nps is None, folder_sk and folder_im must be provided.
+                    2. If folder_nps is not None but no files exist in the folder, folder_sk and folder_im must be
+                        provided, and such files would be created in folder_nps.
+                    3. If folder_nps is not None and files exist in the folder, load the files instead of those
+                        in folder_sk and folder_im for training.
+        """
         super(SaN_dataloader, self).__init__()
         self.idx2skim_pair = []
         self.normalize01 = normalize01
@@ -92,21 +119,35 @@ class SaN_dataloader(torchDataset):
         self.cls2idx = {}
         self.idx2cls = []
         self.lens = [0, 0]
+        if folder_nps and not os.path.exists(folder_nps):
+            os.mkdir(folder_nps)
         for name in clss:
-            sks_folder = join(folder_sk, name) if folder_sk is not None else None
-            ims_folder = join(folder_im, name) if folder_im is not None else None
-            self.idx2skim_pair.append(
-                [[self._prep_img(join(sks_folder, path)) for path in os.listdir(sks_folder)
-                            if path.endswith('.jpg') or path.endswith('.png')],
-                 [self._prep_img(join(ims_folder, path)) for path in os.listdir(ims_folder)
-                           if path.endswith('.jpg') or path.endswith('.png')]])
+            if os.path.exists(folder_sk) and os.path.exists(folder_im):
+                sks_folder = join(folder_sk, name)
+                ims_folder = join(folder_im, name)
+            if folder_nps and os.path.exists(join(folder_nps, npfn(name + '_sk'))):
+                to_app = [np.load(join(folder_nps, npfn(name + '_sk'))), np.load(join(folder_nps, npfn(name + '_im')))]
+            else:
+                to_app = [[self._prep_img(join(sks_folder, path)) for path in os.listdir(sks_folder)
+                                if path.endswith('.jpg') or path.endswith('.png')],
+                     [self._prep_img(join(ims_folder, path)) for path in os.listdir(ims_folder)
+                               if path.endswith('.jpg') or path.endswith('.png')]]
+                to_app[SK] = np.asarray(to_app[SK], dtype=np.uint8)
+                to_app[IM] = np.asarray(to_app[IM], dtype=np.uint8)
+            if folder_nps and not os.path.exists(join(folder_nps, npfn(name + '_sk'))):
+                np.save(join(folder_nps, npfn(name + '_sk')), to_app[SK])
+                np.save(join(folder_nps, npfn(name + '_im')), to_app[IM])
+            to_app[SK] = [Image.fromarray(img) for img in to_app[SK]]
+            to_app[IM] = [Image.fromarray(img) for img in to_app[IM]]
+            self.idx2skim_pair.append(to_app)
             self.cls2idx[name] = len(self.idx2cls)
             self.idx2cls.append(name)
             self.lens[SK] += len(self.idx2skim_pair[-1][SK])
-            self.lens[SK] += len(self.idx2skim_pair[-1][SK])
+            self.lens[IM] += len(self.idx2skim_pair[-1][IM])
+        print('Dataset loaded from folder_sk:{}, folder_im:{}, folder_nps:{}, sk_len:{}, im_len:()'.format(
+            folder_sk, folder_im, folder_nps, self.lens[SK], self.lens[IM]
+        ))
         self.clss = clss
-        self.sks_folder = sks_folder
-        self.ims_folder = ims_folder
         # print("len(self.idx2skim_pair)=", len(self.idx2skim_pair))
             
     def _build_trans(self):
@@ -132,7 +173,7 @@ class SaN_dataloader(torchDataset):
             img = cv2.resize(img, (IMAGE_SIZE,IMAGE_SIZE))
         if self.normalize01:
             img = img / 255.0
-        img = Image.fromarray(img)
+        # img = Image.fromarray(img)
         return img
 
     def __getitem__(self, index):
@@ -172,14 +213,18 @@ class SaN_dataloader(torchDataset):
                     rets_ids.append(id)
                     if len(rets_ims) == batch_size:
                         yield torch.stack(rets_ims, dim=0), torch.tensor(rets_ids)
+                        rets_ims = []
+                        rets_ids = []
+        if len(rets_ims) != 0:
+            yield torch.stack(rets_ims, dim=0), torch.tensor(rets_ids)
 
     def __len__(self):
         return max(self.lens)
 
 
-
 def _test():
-    pass
+    SaN_dataloader(SKETCH_FOLDER_SKETCHY, IMAGE_FOLDER_SKETCHY, TEST_CLASS_SKETCHY + TRAIN_CLASS_SKETCHY, normalize01=False,
+                   doaug=False, exp3ch=True, folder_nps=PKL_FOLDER_SKETCHY)
 
 
 if __name__=="__main__":

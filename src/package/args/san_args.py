@@ -1,5 +1,6 @@
 import argparse
 
+
 def parse_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='san_test', help='The directory to save the model and logs')
@@ -15,6 +16,11 @@ def parse_config():
                              'value will have the greater priority if given. Whatever, test/training classes of the '
                              'given dataset must be provided in dataset/utils.py.',
                         default='')
+    parser.add_argument('--npy_dir', type=str,
+                        help='The npy files directory. By set it 0 to load the default folder provided in '
+                             'dataset/data_san.py. Whatever, test/training classes of the '
+                             'given dataset must be provided in dataset/utils.py.',
+                        default=None)
     parser.add_argument('--start_from', type=str, default=None,
                         help='The iteration the training starts from or the exact model file name. '
                              'Default: None -- Try to start from the latest checkpoint.')

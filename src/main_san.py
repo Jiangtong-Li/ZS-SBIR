@@ -4,6 +4,7 @@ import random
 import numpy as np
 from scipy.spatial.distance import cdist
 import cv2
+import time
 
 import torch
 import torch.distributed as dist
@@ -104,8 +105,7 @@ def _eval(feats_labels_sk, feats_labels_im, n):
     return _get_pre_from_matches(classesn), _get_map_from_matches(classesn)
 
 
-def train(args):
-    # srun --gres=gpu --exclusive python main_san.py --steps 50000 --print_every 500 --save_every 200000 --batch_size 64 --dataset sketchy --margin 1
+def _check_args_paths(args):
     if args.dataset == 'sketchy':
         sketch_folder = SKETCH_FOLDER_SKETCHY
         image_folder = IMAGE_FOLDER_SKETCHY
@@ -119,12 +119,19 @@ def train(args):
     else: raise Exception("dataset args error!")
     if args.sketch_dir != '': image_folder = args.sketch_dir
     if args.image_dir != '': sketch_folder = args.image_dir
+    if args.npy_dir == '0': args.npy_dir = PKL_FOLDER_SKETCHY
+    return sketch_folder, image_folder, train_class, test_class
 
-    data_train = SaN_dataloader(folder_sk=sketch_folder, clss=train_class,
+
+def train(args):
+    # srun --gres=gpu --exclusive python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 64 --dataset sketchy --margin 1 --npy_dir 0
+    sketch_folder, image_folder, train_class, test_class = _check_args_paths(args)
+
+    data_train = SaN_dataloader(folder_sk=sketch_folder, clss=train_class, folder_nps=args.npy_dir,
                                 folder_im=image_folder, normalize01=False, doaug=False)
     dataloader_train = DataLoader(dataset=data_train, batch_size=args.batch_size, shuffle=False)
 
-    data_test = SaN_dataloader(folder_sk=sketch_folder, exp3ch=True, clss=test_class,
+    data_test = SaN_dataloader(folder_sk=sketch_folder, exp3ch=True, clss=test_class, folder_nps=args.npy_dir,
                                folder_im=image_folder, normalize01=False, doaug=False)
 
     model = SaN()
@@ -150,16 +157,19 @@ def train(args):
             if (steps + 1) % args.save_every == 0:
                 model.eval()
                 n = 50; skip = 1
+                start_cpu_t = time.time()
                 feats_labels_sk = _extract_feats(data_test, model, SK, skip=skip, batch_size=args.batch_size)
                 feats_labels_im = _extract_feats(data_test, model, IM, skip=skip, batch_size=args.batch_size)
                 pre, mAP = _eval(feats_labels_sk, feats_labels_im, n)
                 logger.info("Precision@{}: {}, mAP@{}: {}".format(n, pre, n, mAP) +
-                            "  " + 'step: {},  loss: {}'.format(steps, np.mean(loss_sum)))
+                            "  " + 'step: {},  loss: {},  (eval cpu time: {}s)'.format(steps, np.mean(loss_sum),
+                                                                                       time.time() - start_cpu_t))
                 torch.save({'model': model.state_dict(),
                             'optimizer': optimizer.state_dict(),
                             'steps': steps,
                             'args': args},
                            save_fn(args.save_dir, steps, pre, mAP))
+                model.train()
 
             if (steps + 1) % args.print_every == 0:
                 print('step: {},  loss: {}'.format(steps, np.mean(loss_sum)))

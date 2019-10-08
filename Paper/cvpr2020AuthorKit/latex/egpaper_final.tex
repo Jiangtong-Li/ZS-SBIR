@@ -102,16 +102,20 @@
 \subsection{Disentangled Representation}
 
 \section{Methodology}
+There will be five parts in this section. Sec. \ref{3.1} defines the our targeted problem and briefly introduce our framework. Sec.\ref{3.2} introduce the encoders in our model. Sec. \ref{3.3} introduce the decoder in our model. Sec. \ref{3.4} introduce the discriminator in our model. Sec. \ref{3.5} introduce the design of loss functions during training procedure.
 
-\subsection{Problem Definition and Overall model}
+\subsection{Problem Definition and Overall model}\label{3.1}
+In this paper, we focus on solving the problem of hand-free sketch-based image retrieval using disentangled feature representation under zero-shot setup, where only the sketchs and images from seen classes are used during training stage. Our proposed framework is expected to use the sketchs to retrieve the images, the categories of which have never appeared during training.
 
-\subsection{Encoder}
+We first provide a definition of the SBIR in zero-shot setup. Given a dataset $S=\{(x_i^{img}, x_i^{ske}, x_i^{sem}, y_i)|y_i \in \mathcal{Y}\}$, where $x_i^{img}$, $x_i^{ske}$, $x_i^{sem}$ and $y_i$ corresponding to the image, sketch, semantic representation and 
 
-\subsection{Generator}
+\subsection{Encoder}\label{3.2}
 
-\subsection{Discriminator}
+\subsection{Generator}\label{3.3}
 
-\subsection{Loss Function}
+\subsection{Discriminator}\label{3.4}
+
+\subsection{Loss Function}\label{3.5}
 
 
 

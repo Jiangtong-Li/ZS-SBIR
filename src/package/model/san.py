@@ -5,11 +5,22 @@ from collections import OrderedDict
 
 
 class Flatten(nn.Module):
-    def __init__(self):
+    def __init__(self, do_norm=True):
         super(Flatten, self).__init__()
 
-    def forward(self, input):
-        return input.view(input.size(0), -1)
+    def forward(self, x):
+        x = x.view(x.size(0), -1)
+        return x
+
+
+class L2Normalization(nn.Module):
+    def __init__(self, do_norm=True):
+        super(L2Normalization, self).__init__()
+
+    def forward(self, x):
+        div = torch.sqrt(torch.sum(x * x,1))
+        x = (x.T / (div + 1e-10)).T
+        return x
 
 
 class SaN(nn.Module):
@@ -23,6 +34,7 @@ class SaN(nn.Module):
 
     def _make_layers(self):
         '''
+        Refer to https://github.com/yuchuochuo1023/Deep_SBIR_tf/blob/master/triplet_sbir_train.py
         torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
         torch.nn.MaxPool2d(kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False)
         '''
@@ -47,14 +59,15 @@ class SaN(nn.Module):
 
             ('conv6', nn.Conv2d(256, 512, 7, 1, 0)),
             ('relu6', nn.ReLU()),
-            ('dp6', nn.Dropout(0.50)),
+            # ('dp6', nn.Dropout(0.50)),
 
             ('conv7', nn.Conv2d(512, 256, 1, 1, 0)),
-            ('relu7', nn.ReLU()),
-            ('dp7', nn.Dropout(0.50)),
-            ('flatten', Flatten())
+            # ('relu7', nn.ReLU()),
+            # ('dp7', nn.Dropout(0.50)),
+            ('flatten', Flatten()),
+            ('l2norm', L2Normalization()),
             ]))
-    
+
 
 if __name__=='__main__':
     pass

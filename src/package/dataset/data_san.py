@@ -138,7 +138,7 @@ class SaN_dataloader(torchDataset):
                 np.save(join(folder_nps, npfn(name + '_im')), to_app[IM])
             to_app[SK] = [Image.fromarray(img) for img in to_app[SK]]
             to_app[IM] = [Image.fromarray(img) for img in to_app[IM]]
-            # self.idx2skim_pair.append(to_app)
+            self.idx2skim_pair.append(to_app)
             self.cls2idx[name] = len(self.idx2cls)
             self.idx2cls.append(name)
             self.lens[SK] += len(to_app[SK])

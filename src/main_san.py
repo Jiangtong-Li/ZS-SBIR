@@ -125,7 +125,8 @@ def _check_args_paths(args):
 
 
 def train(args):
-    # srun -p gpu --gres=gpu:1 --exclusive --output=san1.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 1 --npy_dir 0 --san_test1
+    # srun -p gpu --gres=gpu:1 --exclusive --output=san10.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 10 --npy_dir 0 --save_dir san_sketchy10
+    # srun -p gpu --gres=gpu:1 --exclusive --output=san1.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 1 --npy_dir 0 --save_dir san_sketchy1
 
     sketch_folder, image_folder, train_class, test_class = _check_args_paths(args)
 

@@ -30,10 +30,8 @@ PKL_FOLDER_SKETCHY = '../datasets/npy_sketchy'
 PKL_FOLDER_SKETCHY = 'G:/f/SJTUstudy/labNL/ZS_SBIR/pkl_sketchy'
 
 
-
 SKETCH_FOLDER_TUBERLIN = 'G:/f/SJTUstudy/labNL/SBIR_datasets/tuberlin/ImageResized'
 IMAGE_FOLDER_TUBERLIN = 'G:/f/SJTUstudy/labNL/SBIR_datasets/tuberlin/png'
-
 
 
 try:
@@ -127,6 +125,7 @@ class SaN_dataloader(torchDataset):
                 ims_folder = join(folder_im, name)
             if folder_nps and os.path.exists(join(folder_nps, npfn(name + '_sk'))):
                 to_app = [np.load(join(folder_nps, npfn(name + '_sk'))), np.load(join(folder_nps, npfn(name + '_im')))]
+                # print(to_app[SK].shape, to_app[IM].shape)
             else:
                 to_app = [[self._prep_img(join(sks_folder, path)) for path in os.listdir(sks_folder)
                                 if path.endswith('.jpg') or path.endswith('.png')],
@@ -139,12 +138,12 @@ class SaN_dataloader(torchDataset):
                 np.save(join(folder_nps, npfn(name + '_im')), to_app[IM])
             to_app[SK] = [Image.fromarray(img) for img in to_app[SK]]
             to_app[IM] = [Image.fromarray(img) for img in to_app[IM]]
-            self.idx2skim_pair.append(to_app)
+            # self.idx2skim_pair.append(to_app)
             self.cls2idx[name] = len(self.idx2cls)
             self.idx2cls.append(name)
-            self.lens[SK] += len(self.idx2skim_pair[-1][SK])
-            self.lens[IM] += len(self.idx2skim_pair[-1][IM])
-        print('Dataset loaded from folder_sk:{}, folder_im:{}, folder_nps:{}, sk_len:{}, im_len:()'.format(
+            self.lens[SK] += len(to_app[SK])
+            self.lens[IM] += len(to_app[IM])
+        print('Dataset loaded from folder_sk:{}, folder_im:{}, folder_nps:{}, sk_len:{}, im_len:{}'.format(
             folder_sk, folder_im, folder_nps, self.lens[SK], self.lens[IM]
         ))
         self.clss = clss
@@ -223,9 +222,24 @@ class SaN_dataloader(torchDataset):
 
 
 def _test():
-    SaN_dataloader(SKETCH_FOLDER_SKETCHY, IMAGE_FOLDER_SKETCHY, TEST_CLASS_SKETCHY + TRAIN_CLASS_SKETCHY, normalize01=False,
+    print('train')
+    sands_train = SaN_dataloader(SKETCH_FOLDER_SKETCHY, IMAGE_FOLDER_SKETCHY, TRAIN_CLASS_SKETCHY, normalize01=False,
                    doaug=False, exp3ch=True, folder_nps=PKL_FOLDER_SKETCHY)
+    print("test")
+    sands_test = SaN_dataloader(SKETCH_FOLDER_SKETCHY, IMAGE_FOLDER_SKETCHY, TEST_CLASS_SKETCHY, normalize01=False,
+                   doaug=False, exp3ch=True, folder_nps=PKL_FOLDER_SKETCHY)
+    # for ims, ids in sands.traverse(what=SK, skip=50):
+    #     print(ims, ids)
+
 
 
 if __name__=="__main__":
     _test()
+
+
+"""
+Dataset loaded from folder_sk:G:/f/SJTUstudy/labNL/ZS_SBIR/256x256/sketch/tx_000000000010, folder_im:G:/f/SJTUstudy/labNL/ZS_SBIR/EXTEND_image_sketchy, folder_nps:G:/f/SJTUstudy/labNL/ZS_SBIR/pkl_sketchy, sk_len:62787, im_len:62549
+test
+
+Dataset loaded from folder_sk:G:/f/SJTUstudy/labNL/ZS_SBIR/256x256/sketch/tx_000000000010, folder_im:G:/f/SJTUstudy/labNL/ZS_SBIR/EXTEND_image_sketchy, folder_nps:G:/f/SJTUstudy/labNL/ZS_SBIR/pkl_sketchy, sk_len:12694, im_len:10453
+"""

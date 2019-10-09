@@ -1,0 +1,15 @@
+\begin{thebibliography}{1}\itemsep=-1pt
+
+\bibitem{deng2009imagenet}
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei.
+\newblock Imagenet: A large-scale hierarchical image database.
+\newblock In {\em 2009 IEEE conference on computer vision and pattern
+  recognition}, pages 248--255. IEEE, 2009.
+
+\bibitem{yelamarthi2018zero}
+Sasi~Kiran Yelamarthi, Shiva~Krishna Reddy, Ashish Mishra, and Anurag Mittal.
+\newblock A zero-shot framework for sketch based image retrieval.
+\newblock In {\em European Conference on Computer Vision}, pages 316--333.
+  Springer, 2018.
+
+\end{thebibliography}

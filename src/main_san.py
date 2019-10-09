@@ -106,7 +106,7 @@ def _eval(feats_labels_sk, feats_labels_im, n):
     return _get_pre_from_matches(classesn), _get_map_from_matches(classesn)
 
 
-def _check_args_paths(args):
+def _parse_args_paths(args):
     if args.dataset == 'sketchy':
         sketch_folder = SKETCH_FOLDER_SKETCHY
         image_folder = IMAGE_FOLDER_SKETCHY
@@ -118,17 +118,18 @@ def _check_args_paths(args):
         train_class = TRAIN_CLASS_TUBERLIN
         test_class = TEST_CLASS_TUBERLIN
     else: raise Exception("dataset args error!")
-    if args.sketch_dir != '': image_folder = args.sketch_dir
-    if args.image_dir != '': sketch_folder = args.image_dir
+    if args.sketch_dir != '': sketch_folder = args.sketch_dir
+    if args.image_dir != '': image_folder = args.image_dir
     if args.npy_dir == '0': args.npy_dir = PKL_FOLDER_SKETCHY
+    elif args.npy_dir == '': args.npy_dir = None
     return sketch_folder, image_folder, train_class, test_class
 
 
 def train(args):
     # srun -p gpu --gres=gpu:1 --exclusive --output=san10.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 10 --npy_dir 0 --save_dir san_sketchy10
     # srun -p gpu --gres=gpu:1 --exclusive --output=san1.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 1 --npy_dir 0 --save_dir san_sketchy1
-
-    sketch_folder, image_folder, train_class, test_class = _check_args_paths(args)
+    # srun -p gpu --gres=gpu:1 --output=san01.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 0.1 --npy_dir 0 --save_dir san_sketchy01
+    sketch_folder, image_folder, train_class, test_class = _parse_args_paths(args)
 
     data_train = SaN_dataloader(folder_sk=sketch_folder, clss=train_class, folder_nps=args.npy_dir,
                                 folder_im=image_folder, normalize01=False, doaug=False)

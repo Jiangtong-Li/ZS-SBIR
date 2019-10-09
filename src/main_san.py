@@ -21,6 +21,7 @@ from package.dataset.data_san import *
 from package.args.san_args import parse_config
 from package.dataset.utils import make_logger
 from package.model.utils import *
+from package.loss.regularization import _Regularization
 
 
 def update_lr(optimizer, lr):
@@ -128,7 +129,7 @@ def _parse_args_paths(args):
 def train(args):
     # srun -p gpu --gres=gpu:1 --exclusive --output=san10.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 10 --npy_dir 0 --save_dir san_sketchy10
     # srun -p gpu --gres=gpu:1 --exclusive --output=san1.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 1 --npy_dir 0 --save_dir san_sketchy1
-    # srun -p gpu --gres=gpu:1 --output=san01.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 0.1 --npy_dir 0 --save_dir san_sketchy01
+    # srun -p gpu --gres=gpu:1 --output=san01.out python main_san.py --steps 50000 --print_every 200 --save_every 1000 --batch_size 96 --dataset sketchy --margin 0.1 --npy_dir 0 --save_dir san_sketchy01
     sketch_folder, image_folder, train_class, test_class = _parse_args_paths(args)
 
     data_train = SaN_dataloader(folder_sk=sketch_folder, clss=train_class, folder_nps=args.npy_dir,
@@ -140,20 +141,22 @@ def train(args):
 
     model = SaN()
     model.cuda()
-    optimizer = Adam(params=model.parameters(), lr=args.lr, weight_decay=args.l2_reg)
+    optimizer = Adam(params=model.parameters(), lr=args.lr)
     logger = make_logger(join(mkdir(args.save_dir), curr_time_str() + '.log'))
     steps = _try_load(args, logger, model, optimizer)
     logger.info(str(args))
     args.steps += steps
     san_loss = _SaN_loss(args.margin)
     model.train()
+    l2_regularization = _Regularization(model, args.l2_reg, p=2, logger=None)
     while True:
         loss_sum = []
         for _, (sketch, positive_image, negative_image, positive_class_id) in enumerate(dataloader_train):
             optimizer.zero_grad()
             loss = san_loss(model(sketch.cuda()),
                             model(positive_image.cuda()),
-                            model(negative_image.cuda()))
+                            model(negative_image.cuda())) \
+                    + l2_regularization()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()

@@ -21,6 +21,7 @@ from package.dataset.data_d3shape import *
 from package.args.d3shape_args import parse_config
 from package.dataset.utils import make_logger
 from package.model.utils import *
+from package.loss.regularization import _Regularization
 
 
 def update_lr(optimizer, lr):
@@ -126,7 +127,7 @@ def _parse_args_paths(args):
 
 
 def train(args):
-    # srun -p gpu --gres=gpu:1 --output=d3shape1.out python main_d3shape.py --steps 50000 --print_every 500 --npy_dir 0 --save_every 2000 --batch_size 96 --dataset sketchy --save_dir d3shape_sketchy
+    # srun -p gpu --gres=gpu:1 --output=d3shape_sketchy.out python main_d3shape.py --steps 50000 --print_every 200 --npy_dir 0 --save_every 1000 --batch_size 8 --dataset sketchy --save_dir d3shape_sketchy
 
     sketch_folder, imsk_folder, train_class, test_class = _parse_args_paths(args)
 
@@ -139,20 +140,22 @@ def train(args):
 
     model = D3Shape()
     model.cuda()
-    optimizer = Adam(params=model.parameters(), lr=args.lr, weight_decay=args.l2_reg)
+    optimizer = Adam(params=model.parameters(), lr=args.lr)
     logger = make_logger(join(mkdir(args.save_dir), curr_time_str() + '.log'))
     steps = _try_load(args, logger, model, optimizer)
     logger.info(str(args))
     args.steps += steps
     d3shape_loss = _D3Shape_loss(cp=args.cp, cn=args.cn)
     model.train()
+    l2_regularization = _Regularization(model, args.l2_reg, p=2, logger=None)
     while True:
         loss_sum = []
         for _, (sketch1, imsk1, sketch2, imsk2, is_same) in enumerate(dataloader_train):
             optimizer.zero_grad()
             sketch1_feats, imsk1_feats = model(sketch1.cuda(), imsk1.cuda())
             sketch2_feats, imsk2_feats = model(sketch2.cuda(), imsk2.cuda())
-            loss = d3shape_loss(sketch1_feats, imsk1_feats, sketch2_feats, imsk2_feats, is_same.cuda())
+            loss = d3shape_loss(sketch1_feats, imsk1_feats, sketch2_feats, imsk2_feats, is_same.cuda()) \
+                    + l2_regularization()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()

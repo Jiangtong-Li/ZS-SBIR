@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class _Regularization(nn.Module):
-    def __init__(self,model,weight_decay,logger,p=2):
+    def __init__(self,model,weight_decay,logger=None,p=2):
         '''
         :param model
         :param weight_decay
@@ -56,6 +56,8 @@ class _Regularization(nn.Module):
         '''
         :param weight_list:
         '''
+        if self.logger is None:
+            return
         self.logger.info("---------------regularization weight---------------")
         for name, _ in weight_list:
             self.logger.info("\t{}".format(name))

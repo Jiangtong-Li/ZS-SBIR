@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 from collections import OrderedDict
@@ -5,7 +6,7 @@ from collections import OrderedDict
 
 
 class Flatten(nn.Module):
-    def __init__(self, do_norm=True):
+    def __init__(self):
         super(Flatten, self).__init__()
 
     def forward(self, x):
@@ -14,7 +15,7 @@ class Flatten(nn.Module):
 
 
 class L2Normalization(nn.Module):
-    def __init__(self, do_norm=True):
+    def __init__(self):
         super(L2Normalization, self).__init__()
 
     def forward(self, x):

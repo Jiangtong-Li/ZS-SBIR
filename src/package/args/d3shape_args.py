@@ -3,16 +3,18 @@ import argparse
 
 def parse_config():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--save_dir', type=str, default='san_test', help='The directory to save the model and logs')
-    parser.add_argument('--margin', type=float, default=0.05,
-                        help='Parameter M in formula: L = max(0,M+D(s, im+) - D(s, im-))')
+    parser.add_argument('--save_dir', type=str, default='d3shape_test', help='The directory to save the model and logs')
+    parser.add_argument('--cp', type=float, default=0.2,
+                        help='Parameter Cn in the Siamese-2 loss')
+    parser.add_argument('--cn', type=float, default=10,
+                        help='Parameter Cn in the Siamese-2 loss')
     parser.add_argument('--sketch_dir', type=str,
-                        help='The directory of sketches. The directory can be defined in dataset/data_san.py, but parsed '
+                        help='The directory of sketches. The directory can be defined in dataset/data_d3shape.py, but parsed '
                              'value will have the greater priority if given. Whatever, test/training classes of the '
                              'given dataset must be provided in dataset/utils.py.',
                         default='')
-    parser.add_argument('--image_dir', type=str,
-                        help='The directory of images. The directory can be defined in dataset/data_san.py, but parsed '
+    parser.add_argument('--imsk_dir', type=str,
+                        help='The directory of sketch tokens of the images. The directory can be defined in dataset/data_d3shape.py, but parsed '
                              'value will have the greater priority if given. Whatever, test/training classes of the '
                              'given dataset must be provided in dataset/utils.py.',
                         default='')

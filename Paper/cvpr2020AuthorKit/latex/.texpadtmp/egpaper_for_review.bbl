@@ -6,6 +6,17 @@ Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei.
 \newblock In {\em 2009 IEEE conference on computer vision and pattern
   recognition}, pages 248--255. IEEE, 2009.
 
+\bibitem{kingma2013auto}
+Diederik~P Kingma and Max Welling.
+\newblock Auto-encoding variational bayes.
+\newblock {\em arXiv preprint arXiv:1312.6114}, 2013.
+
+\bibitem{wang2019stacked}
+Hao Wang, Cheng Deng, Xinxu Xu, Wei Liu, Xinbo Gao, and Dacheng Tao.
+\newblock Stacked semantic-guided network for zero-shot sketch-based image
+  retrieval.
+\newblock {\em arXiv preprint arXiv:1904.01971}, 2019.
+
 \bibitem{yelamarthi2018zero}
 Sasi~Kiran Yelamarthi, Shiva~Krishna Reddy, Ashish Mishra, and Anurag Mittal.
 \newblock A zero-shot framework for sketch based image retrieval.
@@ -24,5 +35,12 @@ Matthew~D Zeiler and Rob Fergus.
 \newblock Visualizing and understanding convolutional networks.
 \newblock In {\em European conference on computer vision}, pages 818--833.
   Springer, 2014.
+
+\bibitem{zhu2017toward}
+Jun-Yan Zhu, Richard Zhang, Deepak Pathak, Trevor Darrell, Alexei~A Efros,
+  Oliver Wang, and Eli Shechtman.
+\newblock Toward multimodal image-to-image translation.
+\newblock In {\em Advances in Neural Information Processing Systems}, pages
+  465--476, 2017.
 
 \end{thebibliography}

@@ -2,4 +2,8 @@
 \backcite {deng2009imagenet}{{1}{3.1}{subsection.3.1}}
 \backcite {yu2017sketch}{{1}{3.2}{subsection.3.2}}
 \backcite {zeiler2014visualizing}{{1}{3.2}{subsection.3.2}}
-\backcite {}{{1}{3.2}{subsection.3.2}}
+\backcite {deng2009imagenet}{{1}{3.2}{subsection.3.2}}
+\backcite {wang2019stacked}{{2}{3.2}{equation.3.1}}
+\backcite {wang2019stacked,yelamarthi2018zero}{{2}{3.3}{subsection.3.3}}
+\backcite {zhu2017toward}{{2}{3.3}{subsection.3.3}}
+\backcite {kingma2013auto}{{2}{3.3.1}{subsubsection.3.3.1}}

@@ -12,4 +12,17 @@ Sasi~Kiran Yelamarthi, Shiva~Krishna Reddy, Ashish Mishra, and Anurag Mittal.
 \newblock In {\em European Conference on Computer Vision}, pages 316--333.
   Springer, 2018.
 
+\bibitem{yu2017sketch}
+Qian Yu, Yongxin Yang, Feng Liu, Yi-Zhe Song, Tao Xiang, and Timothy~M
+  Hospedales.
+\newblock Sketch-a-net: A deep neural network that beats humans.
+\newblock {\em International journal of computer vision}, 122(3):411--425,
+  2017.
+
+\bibitem{zeiler2014visualizing}
+Matthew~D Zeiler and Rob Fergus.
+\newblock Visualizing and understanding convolutional networks.
+\newblock In {\em European conference on computer vision}, pages 818--833.
+  Springer, 2014.
+
 \end{thebibliography}

@@ -231,9 +231,16 @@ where the $\lambda_i$ are the weight for all the loss functions.
 pass
 
 \subsubsection{Inference}
-At test stage, we divided our process into two parts, 1) the conditional decoder is used to synthesize a number of corresponding natural image features conditioned on  test sketch features. Then the average of the synthesized features is obtained to represent the final synthesized image features $\hat{f}_{img}$; 2) the image structure encoder and the sketch encoder will map the image and sketch into a same space and get $h^{ske}$ and $h^{img}$.
+At test stage, we divided our process into two parts, 1) the conditional decoder is used to synthesize a number of corresponding natural image features conditioned on  test sketch features. Then the average of the synthesized features is obtained to represent the final synthesized image features $\hat{f}_{img}$; 2) the image structure encoder and the sketch encoder will map the image and sketch into a same space.
 
-When retrieval the image, we computer the cosine distance between synthesized im
+While retrieving the image, we computer the fusion cosine distance between image and sketch. The fusion cosine distance is defined as:
+\begin{equation}
+\begin{aligned}
+	Dis_{fusion} =& \omega D_{cosine}(\hat{f}^{img}_i, f^{img}_{i}) +  \\
+	& (1-\omega) D_{cosine}(h^{ske}_i, h^{img}_i), 
+\end{aligned}
+\end{equation}
+where $h^{ske}_i$ and $h^{img}_i$ are the output of $E^{ske}(\cdot)$ and $E^{img}_{s}(\cdot)$.
 
 
 
@@ -270,9 +277,8 @@ When retrieval the image, we computer the cosine distance between synthesized im
 
 \section{To Discuss}
 \begin{itemize}
-	\item Whether to generator the whole image/sketch.
-	\item If the poses between the image and the sketch are different, can the model learn the sketch information between image and sketch.
-	\item Where to add the semantics information to further supervise the model's training.
+	\item Does this method sound promising and solid?
+	\item I feel the there are too many loss item, can any of them be reduced?
 \end{itemize}
 
 

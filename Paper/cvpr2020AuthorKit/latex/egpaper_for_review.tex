@@ -98,17 +98,19 @@ First line of institution2 address\\
 
 \subsection{Zero-Shot Learning}
 
-\subsection{Disentangled Representation}
+\subsection{Cross-modal domain translation}
 
 \section{Methodology}
 There will be five parts in this section. Sec. \ref{3.1} defines the our targeted problem and briefly introduce our framework. Sec.\ref{3.2} introduce the encoders in our model. Sec. \ref{3.3} introduce the decoder in our model. Sec. \ref{3.4} introduce the discriminator in our model. Sec. \ref{3.5} introduce the design of loss functions during training procedure.
 
 \subsection{Problem Definition} \label{3.1}
-In this paper, we focus on solving the problem of hand-free sketch-based image retrieval using disentangled feature representation under zero-shot setup, where only the sketches and images from seen class are used during training stage. Our proposed framework is expected to use the sketchs to retrieve the images, the categories of which have never appeared during training.
+In this paper, we focus on solving the problem of hand-free sketch-based image retrieval under zero-shot setup, where only the sketches and images from seen class are used during training stage. Our proposed framework is expected to use the sketchs to retrieve the images, the categories of which have never appeared during training.
 
 We first provide a definition of the SBIR in zero-shot setting. Given a dataset $S=\{(x_i^{img}, x_i^{ske}, x_i^{sem}, y_i)|y_i \in \mathcal{Y}\}$, where $x_i^{img}$, $x_i^{ske}$, $x_i^{sem}$ and $y_i$ are corresponding to the image, sketch, semantic representation and class label. Following the zero-shot setting in \cite{yelamarthi2018zero}, we split all classes $\mathcal{Y}$ into $\mathcal{Y}_{train}$ and $\mathcal{Y}_{test}$ according to whether the label exists in ImageNet\cite{deng2009imagenet}, where no overlap exists between two label set, i.e. $\mathcal{Y}_{train} \cap \mathcal{Y}_{test} = \emptyset$. Based on the partition of label set $\mathcal{Y}$, we split dataset into $S_{train}$ and $S_{test}$. Our model need to disentangle structure representations of image using data in $S_{train}$. During test, given $x^{ske}$ from $S_{test}$, our model need to retrieve several images from test images candidate.
 
-Our goal is to disentangle image structure features from image. The architecture of our proposed model shows in Figure \ref{fig:model}, which contains two structure encoders $\{E_{s}^{img}, E^{ske}\}$, one apearance encoder $E^{img}_{a}$, two feature generator $\{G^{img}, G^{ske}\}$ and two domain discriminators $\{D^{img}, D^{ske}\}$. As the main part of model, the $E_{s}^{img}$ disentangle the structure features of image into a shared structure feature space along with the $E^{ske}$ operating on sketch. 
+Our goal is to learn a two-way map between image feature domain to sketch feature domain. To this end, we propose a new deep network (shown in Figure \ref{fig:2}), which contains two structure encoders $\{E_{s}^{img}, E^{ske}\}$, one apearance encoder $E^{img}_{a}$, two feature decoder $\{G^{img}, G^{ske}\}$, a semantic decoder and two domain discriminators $\{D^{img}, D^{ske}\}$. Note that, the overall model can be regrad as two cVAE-GANs working parallelly, which target to reconstruct sketch features from image and reconstruct image features from both sketches and images. To better capture the semantics information inside the sketches and images, we also add a semantic decoder to preserve semantics information while reconstructing the image features.
+
+%Compare with the image, the sketch are obvious lack of image information, which makes it hard to reconstruct image features from sketch only
 
 \subsection{Encoder} \label{3.2}
 

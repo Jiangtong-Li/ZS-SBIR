@@ -25,11 +25,12 @@ class VGG(nn.Module):
 
     def __init__(self, features, num_classes=1000, init_weights=True, return_type=0, dropout=0.1):
         """
-        return_type - [0, 1] - [classification result, 4096-D feature]
+        return_type - [0, 1, 2, 3] - [classification result, 4096-D feature, 7 7 512 feature, GAP_feature]
         """
         super(VGG, self).__init__()
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        self.gap_pool = nn.AdaptiveAvgPool2d((1, 1))
         if return_type == 0:
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7, 4096),
@@ -40,7 +41,7 @@ class VGG(nn.Module):
                 nn.Dropout(),
                 nn.Linear(4096, num_classes),
             )
-        elif return_type == 1:
+        elif return_type == 1 or return_type == 3:
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7, 4096),
                 nn.ReLU(True),
@@ -57,12 +58,25 @@ class VGG(nn.Module):
             self._initialize_weights()
 
     def forward(self, x):
-        x = self.features(x)
-        x = self.avgpool(x)
-        if self.classifier is not None:
-            x = torch.flatten(x, 1)
-            x = self.classifier(x)
-        return x
+        if self.return_type != 3:
+            x = self.features(x)
+            x = self.avgpool(x)
+            if self.classifier is not None:
+                x = torch.flatten(x, 1)
+                x = self.classifier(x)
+            return x
+        else:
+            GAP = list()
+            ex_idx = [3, 8, 15, 22, 29]
+            for idx, net in enumerate(self.features): # idx 3, 8, 15, 22, 29
+                x = net(x)
+                if idx in ex_idx:
+                    GAP.append(self.gap_pool(x))
+            x = self.avgpool(x)
+            if self.classifier is not None:
+                x = torch.flatten(x, 1)
+                x = self.classifier(x)
+            return x, GAP
 
     def _initialize_weights(self):
         for m in self.modules():

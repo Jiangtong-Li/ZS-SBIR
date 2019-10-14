@@ -88,10 +88,10 @@ class CMDT(nn.Module):
         self.semantics = nn.Embedding.from_pretrained(pretrain_embedding)
         if fix_embedding:
             self.semantics.weight.requires_grad=False
-        self.backbone = vgg16(pretrained=from_pretrain, return_type=3, dropout=dropout_prob)
-        if fix_backbone:
-            for param in self.backbone.parameters():
-                param.requires_grad = False
+        #self.backbone = vgg16(pretrained=from_pretrain, return_type=3, dropout=dropout_prob)
+        #if fix_backbone:
+        #    for param in self.backbone.parameters():
+        #        param.requires_grad = False
         self.sketch_encoder = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
         self.image_encoder_S = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
         self.image_encoder_A = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
@@ -100,8 +100,19 @@ class CMDT(nn.Module):
         self.image_decoder = Encoder_Decoder(hidden_size, pca_size, dropout_prob, 3)
         self.semantic_preserve = Semantic_Preservation(pca_size, semantic_size, dropout_prob, self.seman_dist)
     
-    def forward(self, image_p, image_n, sketch):
-        pass
+    def forward(self, image_p, image_n, sketch, semantics):
+        """
+        image_p [batch_size, pca_size]
+        image_n [batch_size, pca_size]
+        sketch [batch_size, pca_size]
+        semantics [batch_size, 1]
+        """
+        # recode size info
+        batch_size = image_p.shape[0]
+        pca_size = image_p.shape[1]
+        # load semantics info
+        semantics_embedding = self.semantics(semantics)
+        semantics_embedding = semantics_embedding.reshape([batch_size, -1])
 
 
         

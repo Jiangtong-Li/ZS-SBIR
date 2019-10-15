@@ -16,33 +16,38 @@ from torch.utils.tensorboard import SummaryWriter
 
 from package.model.zsim import ZSIM
 from package.loss.regularization import _Regularization
-from package.dataset.data_zsih import ZSIH_dataloader
+from package.dataset.data_cm_translate import CMTranslate
 from package.args.zsih_args import parse_config
 from package.dataset.utils import make_logger
 
-ckpt = torch.load('/home/jiangtongli/Lab_Work/ZS-SBIR/model/zsih_test1/Iter_4000.pkl', map_location='cpu')
+#ckpt = torch.load('/home/jiangtongli/Lab_Work/ZS-SBIR/model/zsih_test1/Iter_4000.pkl', map_location='cpu')
 
-args = ckpt['args']
+#args = ckpt['args']
 
-data = ZSIH_dataloader(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, args.packed_pkl_zs, zs=args.zs)
+data = CMTranslate('/home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/sketch/tx_000100000000', 
+                   '/home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/EXTEND_image_sketchy', 
+                   '/home/jiangtongli/Lab_Work/ZS-SBIR/data/info/stats.csv', 
+                   '/home/jiangtongli/Lab_Work/ZS-SBIR/data/GoogleNews-vectors-negative300.bin', 
+                   '/home/jiangtongli/Lab_Work/ZS-SBIR/data/preprocessed/zs_cm_packed.pkl', 
+                   '/home/jiangtongli/Lab_Work/ZS-SBIR/data/256x256/CNN_feature_5568.h5py')
 
 dataLoader = DataLoader(dataset=data, batch_size=64, num_workers=0, shuffle=True)
 
-model = ZSIM(args.hidden_size, args.hashing_bit, args.semantics_size, data.pretrain_embedding.float(), 
-             adj_scaler=args.adj_scaler, dropout=args.dropout, fix_cnn=args.fix_cnn, 
-             fix_embedding=args.fix_embedding)
-
-optimizer = Adam(params=model.parameters(), lr=args.lr)
-model.load_state_dict(ckpt['model'])
-optimizer.load_state_dict(ckpt['optimizer'])
+# model = ZSIM(args.hidden_size, args.hashing_bit, args.semantics_size, data.pretrain_embedding.float(), 
+#              adj_scaler=args.adj_scaler, dropout=args.dropout, fix_cnn=args.fix_cnn, 
+#              fix_embedding=args.fix_embedding)
+# 
+# optimizer = Adam(params=model.parameters(), lr=args.lr)
+# model.load_state_dict(ckpt['model'])
+# optimizer.load_state_dict(ckpt['optimizer'])
 
 iter = 0
-for sketch, image, semantics in dataLoader:
+for sketch, image_p, image_n, semantics in dataLoader:
     iter += 1
     if iter and iter % 100 == 0:
         print(iter)
-    semantics = semantics.long()
-    loss = model(sketch, image, semantics)
+    #semantics = semantics.long()
+    #loss = model(sketch, image, semantics)
     #for i in range(sketch.shape[0]):
     #    sk = sketch[i].numpy().reshape(224, 224, 3)
     #    im = image[i].numpy().reshape(224, 224, 3)

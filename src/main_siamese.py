@@ -117,57 +117,25 @@ def train(args):
                 rank_cosine = np.argsort(dists_cosine, 0)
                 rank_euclid = np.argsort(dists_euclid, 0)
 
-                # train eval
-                #image_label_train = list()
-                #image_feature = list()
-                #for image, label in data.load_train_images(batch_size=args.batch_size):
-                #    image = image.cuda(args.gpu_id)
-                #    image_label_train += label
-                #    tmp_feature = model.get_feature(image).cpu().detach().numpy()
-                #    image_feature.append(tmp_feature)
-                #image_feature = np.vstack(image_feature)
-
-                #sketch_label_train = list()
-                #sketch_feature = list()
-                #for sketch, label in data.load_train_sketch(batch_size=args.batch_size):
-                #    sketch = sketch.cuda(args.gpu_id)
-                #    sketch_label_train += label
-                #    tmp_feature = model.get_feature(sketch).cpu().detach().numpy()
-                #    sketch_feature.append(tmp_feature)
-                #sketch_feature = np.vstack(sketch_feature)
-
-                #dists_cosine_train = cdist(image_feature, sketch_feature, 'cosine')
-                #print(dists_cosine_train.shape)
-
-                #rank_cosine_train = np.argsort(dists_cosine_train, 0)
-
                 for n in [5, 200]:
                     ranksn_cosine = rank_cosine[:n, :].T
                     ranksn_euclid = rank_euclid[:n, :].T
-                    #ranksn_cosine_train = rank_cosine_train[:n, :].T
 
                     classesn_cosine = np.array([[image_label[i] == sketch_label[r] \
                                                 for i in ranksn_cosine[r]] for r in range(len(ranksn_cosine))])
                     classesn_euclid = np.array([[image_label[i] == sketch_label[r] \
                                                 for i in ranksn_euclid[r]] for r in range(len(ranksn_euclid))])
-                    #classesn_cosine_train = np.array([[image_label_train[i] == sketch_label_train[r] \
-                    #                            for i in ranksn_cosine_train[r]] for r in range(len(ranksn_cosine_train))])
-
 
                     precision_cosine = np.mean(classesn_cosine)
                     precision_euclid = np.mean(classesn_euclid)
-                    #precision_cosine_train = np.mean(classesn_cosine_train)
 
                     writer.add_scalar('Precision_{}/cosine'.format(n),
                             precision_cosine, global_step)
                     writer.add_scalar('Precision_{}/euclid'.format(n),
                             precision_euclid, global_step)
-                    #writer.add_scalar('Precision_{}/cosine_train'.format(n),
-                    #        precision_cosine_train, global_step)
 
                     logger.info('Iter {}, Precision_{}/cosine {}'.format(global_step, n, precision_cosine))
                     logger.info('Iter {}, Precision_{}/euclid {}'.format(global_step, n, precision_euclid))
-                    #logger.info('Iter {}, Precision_{}/cosine_train {}'.format(global_step, n, precision_cosine_train))
 
                 if best_precision < precision_cosine:
                     patience = args.patience
@@ -219,14 +187,11 @@ def train(args):
             writer.add_scalar('Siamese/Dis-Similar', dis_sim.item(), global_step)
             loss = loss_siamese + loss_l2
             loss.backward()
-            #print(loss_siamese.item())
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             if batch_acm % args.cum_num == 0:
                 optimizer.step()
                 global_step += 1
-
-            #print(loss_siamese.item())
 
 if __name__ == '__main__':
     args = parse_config()

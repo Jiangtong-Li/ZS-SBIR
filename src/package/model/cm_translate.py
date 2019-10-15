@@ -6,6 +6,7 @@ import torch.functional as F
 
 from src.package.model.variational_dropout import VariationalDropout
 from src.package.model.vgg import vgg16
+from src.package.loss.triplet_loss import _Triplet_loss
 
 class Encoder_Decoder(nn.Module):
     """
@@ -64,7 +65,7 @@ class Semantic_Preservation(nn.Module):
 
     def forward(self, x, target):
         predict = self.fea2sem(x)
-        loss = self.loss_fn(x, target)
+        loss = torch.mean(self.loss_fn(x, target))
         return predict, loss
 
 class CMDT(nn.Module):
@@ -73,7 +74,7 @@ class CMDT(nn.Module):
     """
     def __init__(self, pca_size, hidden_size, semantic_size, pretrain_embedding, 
                  from_pretrain=True, dropout_prob=0.3, fix_backbone=True, fix_embedding=True, 
-                 seman_dist='l2'):
+                 seman_dist='l2', triplet_dist='l2', margin=1):
         super(CMDT, self).__init__()
         # Dist Matrics
         self.l2_dist = nn.PairwiseDistance(p=2)
@@ -84,6 +85,13 @@ class CMDT(nn.Module):
             self.seman_dist = self.cosine
         else:
             raise ValueError('The seman_dist should be l2 or cosine')
+        if triplet_dist == 'l2':
+            self.triplet_dist = self.l2_dist
+        elif triplet_dist == 'cosine':
+            self.triplet_dist = self.cosine
+        else:
+            raise ValueError('The triplet_dist should be l2 or cosine')
+
         # Modules
         self.semantics = nn.Embedding.from_pretrained(pretrain_embedding)
         if fix_embedding:
@@ -97,8 +105,11 @@ class CMDT(nn.Module):
         self.image_encoder_A = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
         self.variational_sample = Variational_Sampler(hidden_size)
         self.sketch_decoder = Encoder_Decoder(hidden_size, pca_size, dropout_prob, 3)
-        self.image_decoder = Encoder_Decoder(hidden_size, pca_size, dropout_prob, 3)
+        self.image_decoder = Encoder_Decoder(hidden_size*2, pca_size, dropout_prob, 3)
         self.semantic_preserve = Semantic_Preservation(pca_size, semantic_size, dropout_prob, self.seman_dist)
+
+        # Loss
+        self.triplet_loss = _Triplet_loss(self.triplet_dist, margin)
     
     def forward(self, image_p, image_n, sketch, semantics):
         """
@@ -113,6 +124,48 @@ class CMDT(nn.Module):
         # load semantics info
         semantics_embedding = self.semantics(semantics)
         semantics_embedding = semantics_embedding.reshape([batch_size, -1])
-
-
-        
+        # model
+        sketch_encode_feature = self.sketch_encoder(sketch)
+        image_n_encode_feature_s = self.image_encoder_S(image_n)
+        image_p_encode_feature_s = self.image_encoder_S(image_p)
+        image_p_encode_feature_a = self.image_encoder_A(image_p)
+        image_p_encode_feature_a_resampled, kl_loss = self.variational_sample(image_p_encode_feature_a) # kl loss(1)
+        image_p_sketch_feature_combine = torch.concat([image_p_encode_feature_a_resampled, sketch_encode_feature], dim=1)
+        image_translate = self.image_decoder(image_p_sketch_feature_combine)
+        sketch_translate = self.sketch_decoder(image_p_encode_feature_s)
+        _predicted_semantic, semantics_loss = self.semantic_preserve(image_translate, semantics_embedding) # seman loss(2)
+        # loss
+        triplet_loss = self.triplet_loss(image_p_encode_feature_s, image_n_encode_feature_s, sketch_encode_feature) # triplet loss(3)
+        image_translate_loss = torch.mean(self.l2_dist(image_translate, image_p)) # image loss(5)
+        sketch_translate_loss = torch.mean(self.l2_dist(sketch_translate, sketch)) # sketch loss(6)
+        orthogonality_loss = torch.mean(1-self.cosine(image_p_encode_feature_s, image_p_encode_feature_a)) # orthogonality loss(4)
+        loss = dict()
+        loss['kl'] = kl_loss
+        loss['seman'] = semantics_loss
+        loss['triplet'] = triplet_loss
+        loss['orthogonality'] = orthogonality_loss
+        loss['image'] = image_translate_loss
+        loss['sketch'] = sketch_translate_loss
+        return loss
+    
+    def inference_structure(self, x, mode):
+        """
+        map sketch and image to structure space
+        """
+        if mode=='image':
+            return self.image_encoder_S(x)
+        elif mode=='sketch':
+            return self.sketch_encoder(x)
+        else:
+            raise ValueError('The mode must be image or sketch')
+    
+    def inference_generation(self, x, sample_times=200):
+        x_hidden = self.sketch_encoder(x)
+        generated = list()
+        for _ in range(sample_times):
+            eps = torch.randn_like(x_hidden)
+            z = torch.concat([eps, x_hidden], dim=1)
+            image_translate = self.image_decoder(z)
+            generated.append(image_translate)
+        generated = torch.mean(torch.stack(generated, dim=-1),dim=-1)
+        return generated

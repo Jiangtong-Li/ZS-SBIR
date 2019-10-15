@@ -35,17 +35,17 @@ class VGG(nn.Module):
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7, 4096),
                 nn.ReLU(True),
-                nn.Dropout(),
+                nn.Dropout(dropout),
                 nn.Linear(4096, 4096),
                 nn.ReLU(True),
-                nn.Dropout(),
+                nn.Dropout(dropout),
                 nn.Linear(4096, num_classes),
             )
         elif return_type == 1 or return_type == 3:
             self.classifier = nn.Sequential(
                 nn.Linear(512 * 7 * 7, 4096),
                 nn.ReLU(True),
-                nn.Dropout(0.5),
+                nn.Dropout(dropout),
                 nn.Linear(4096, 4096)
             )
         elif return_type == 2:
@@ -71,12 +71,13 @@ class VGG(nn.Module):
             for idx, net in enumerate(self.features): # idx 3, 8, 15, 22, 29
                 x = net(x)
                 if idx in ex_idx:
-                    GAP.append(self.gap_pool(x))
+                    GAP.append(torch.squeeze(self.gap_pool(x))) 
             x = self.avgpool(x)
-            if self.classifier is not None:
-                x = torch.flatten(x, 1)
-                x = self.classifier(x)
-            return x, GAP
+            x = torch.flatten(x, 1)
+            x = self.classifier(x)
+            GAP.append(x)
+            GAP = torch.cat(GAP, dim=-1) # 4096 + 512 + 512 + 256 + 128 + 64 = 5568
+            return GAP
 
     def _initialize_weights(self):
         for m in self.modules():

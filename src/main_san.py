@@ -22,6 +22,10 @@ from package.args.san_args import parse_config
 from package.dataset.utils import make_logger
 from package.model.utils import *
 from package.loss.regularization import _Regularization
+from sklearn.neighbors import NearestNeighbors as NN
+
+
+DEBUG = True
 
 
 def update_lr(optimizer, lr):
@@ -72,39 +76,51 @@ def _extract_feats(data_test, model, what, skip=1, batch_size=16):
 
 
 def _get_pre_from_matches(matches):
+    """
+    :param matches: A n-by-m matrix. n is number of test samples, m is the top m elements used for evaluation
+    :return: precision
+    """
     return np.mean(matches)
 
 
+def _map_change(inputArr):
+    dup = np.copy(inputArr)
+    for idx in range(inputArr.shape[1]):
+        if idx != 0:
+            # dup cannot be bool type
+            dup[:,idx] = dup[:,idx-1] + dup[:,idx]
+    return np.multiply(dup, inputArr)
+
+
 def _get_map_from_matches(matches):
-    s = 0
-    for match in matches:
-        count = 0
-        for rank, ismatch in enumerate(match):
-            s += ismatch * (count + 1) / (rank + 1)
-            count += ismatch
-    return s / matches.size
-
-
-def _eval(feats_labels_sk, feats_labels_im, n):
     """
-    Refer to https://blog.csdn.net/JNingWei/article/details/78955536 for mAP calculation
+    mAP's calculation refers to https://github.com/ShivaKrishnaM/ZS-SBIR/blob/master/trainCVAE_pre.py.
+    :param matches: A n-by-m matrix. n is number of test samples, m is the top m elements used for evaluation
+    :return: mAP
+    """
+    temp = [np.arange(matches.shape[1]) for _ in range(matches.shape[0])]
+    mAP_term = 1.0 / (np.stack(temp, axis=0) + 1.0)
+    mAP = np.mean(np.multiply(_map_change(matches), mAP_term), axis=1)
+    return np.mean(mAP)
+
+
+def _eval(feats_labels_sk, feats_labels_im, n=200):
+    """
     :param feats_labels_sk: a two-element tuple [features_of_sketches, labels_of_sketches]
+        labels_of_sketches and labels_of_images are scalars(class id).
     :param feats_labels_im: a two-element tuple [features_of_images, labels_of_images]
+            features_of_images and features_of_sketches are used for distance calculation.
     :param n: the top n elements used for evaluation
     :return: precision@n, mAP@n
     """
-    # print("eval\n", len(feats_labels_sk[1]), len(feats_labels_im[1])) # 1099 581
+    nn = NN(n_neighbors=n, metric='cosine', algorithm='brute').fit(feats_labels_im[0])
+    _, indices = nn.kneighbors(feats_labels_sk[0])
+    retrieved_classes = np.array(feats_labels_im[1])[indices]
 
-    dists = cdist(feats_labels_sk[0], feats_labels_im[0], 'euclidean')
-    # print("dists.shape=", dists.shape)  # (1099, 581)
-    ranks = np.argsort(dists, 1) # (1099, 581)
-
-    ranksn = ranks[:, :n] # (1099, 50)
-    # print("dists ranks ranksn shape=", dists.shape, ranks.shape, ranksn.shape)
-
-    classesn = np.array([[feats_labels_im[1][i] == feats_labels_sk[1][r] for i in ranksn[r]] for r in range(len(ranksn))])
-
-    return _get_pre_from_matches(classesn), _get_map_from_matches(classesn)
+    # astype(np.uint16) is necessary
+    ranks = np.vstack([(retrieved_classes[i] == feats_labels_sk[1][i])
+                       for i in range(retrieved_classes.shape[0])]).astype(np.uint16)
+    return _get_pre_from_matches(ranks), _get_map_from_matches(ranks)
 
 
 def _parse_args_paths(args):
@@ -121,7 +137,7 @@ def _parse_args_paths(args):
     else: raise Exception("dataset args error!")
     if args.sketch_dir != '': sketch_folder = args.sketch_dir
     if args.image_dir != '': image_folder = args.image_dir
-    if args.npy_dir == '0': args.npy_dir = PKL_FOLDER_SKETCHY
+    if args.npy_dir == '0': args.npy_dir = NPY_FOLDER_SKETCHY
     elif args.npy_dir == '': args.npy_dir = None
     return sketch_folder, image_folder, train_class, test_class
 
@@ -129,8 +145,17 @@ def _parse_args_paths(args):
 def train(args):
     # srun -p gpu --gres=gpu:1 --exclusive --output=san10.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 10 --npy_dir 0 --save_dir san_sketchy10
     # srun -p gpu --gres=gpu:1 --exclusive --output=san1.out python main_san.py --steps 50000 --print_every 500 --save_every 2000 --batch_size 96 --dataset sketchy --margin 1 --npy_dir 0 --save_dir san_sketchy1
-    # srun -p gpu --gres=gpu:1 --output=san01.out python main_san.py --steps 50000 --print_every 200 --save_every 1000 --batch_size 96 --dataset sketchy --margin 0.1 --npy_dir 0 --save_dir san_sketchy01
+
+    # srun -p gpu --gres=gpu:1 --output=san_sketchy03.out python main_san.py --steps 30000 --print_every 200 --save_every 3000 --batch_size 96 --dataset sketchy --margin 0.3 --npy_dir 0 --save_dir san_sketchy03 --lr 0.0001
     sketch_folder, image_folder, train_class, test_class = _parse_args_paths(args)
+
+    if DEBUG:
+        args.print_every = 5
+        args.save_every = 20
+        args.steps = 100
+        args.batch_size = 32
+        train_class = train_class[:2]
+        test_class = test_class[:2]
 
     data_train = SaN_dataloader(folder_sk=sketch_folder, clss=train_class, folder_nps=args.npy_dir,
                                 folder_im=image_folder, normalize01=False, doaug=False)
@@ -163,7 +188,7 @@ def train(args):
             loss_sum.append(float(loss.item()))
             if (steps + 1) % args.save_every == 0:
                 model.eval()
-                n = 50; skip = 1
+                n = 200; skip = 1
                 start_cpu_t = time.time()
                 feats_labels_sk = _extract_feats(data_test, model, SK, skip=skip, batch_size=args.batch_size)
                 feats_labels_im = _extract_feats(data_test, model, IM, skip=skip, batch_size=args.batch_size)
@@ -187,6 +212,49 @@ def train(args):
         if steps >= args.steps: break
 
 
+def gen_args(margin=0.3, dataset='sketchy'):
+    margins = str(margin).replace('.', '')
+    return \
+"""
+###
+
+#!/bin/bash
+
+#SBATCH --job-name=ZXLing
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --output=san_%j.out
+#SBATCH --time=7-00:00:00
+module load gcc/7.3.0 anaconda/3 cuda/9.2 cudnn/7.1.4
+
+source activate lzxtc
+python main_san.py --steps 30000 --print_every 500 --npy_dir 0 --save_every 3000 --batch_size 32 --dataset {} --save_dir san_{}_{} --lr 0.0001 --margin {}
+
+sbatch san.slurm
+""".format(dataset, dataset, margins, margin)
+
+
 if __name__ == '__main__':
+    # print(gen_args(1))
+    # exit()
     args = parse_config()
     train(args)
+
+
+'''
+#!/bin/bash
+
+#SBATCH --job-name=ZXLing
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --output=san_%j.out
+#SBATCH --time=7-00:00:00
+module load gcc/7.3.0 anaconda/3 cuda/9.2 cudnn/7.1.4
+
+source activate lzxtc
+python main_san.py --steps 30000 --print_every 500 --npy_dir 0 --save_every 3000 --batch_size 32 --dataset sketchy --save_dir san_sketchy_03 --lr 0.0001 --margin 0.3
+python main_san.py --steps 30000 --print_every 500 --npy_dir 0 --save_every 3000 --batch_size 32 --dataset sketchy --save_dir san_sketchy_01 --lr 0.0001 --margin 0.1
+python main_san.py --steps 30000 --print_every 500 --npy_dir 0 --save_every 3000 --batch_size 32 --dataset sketchy --save_dir san_sketchy_05 --lr 0.0001 --margin 0.5
+python main_san.py --steps 30000 --print_every 500 --npy_dir 0 --save_every 3000 --batch_size 32 --dataset sketchy --save_dir san_sketchy_1 --lr 0.0001 --margin 1
+sbatch san.slurm
+'''

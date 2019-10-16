@@ -17,17 +17,15 @@ from tqdm import tqdm
 from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE_SIZE, SEMANTICS_REPLACE
 from package.model.vgg import vgg16
 
-class CMTranslate(torchDataset):
-    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, normalize=False, zs=True):
-        super(CMTranslate, self).__init__()
+class CMDTrans_data(torchDataset):
+    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, zs=True):
+        super(CMDTrans_data, self).__init__()
         self.sketch_dir = sketch_dir
         self.image_dir = image_dir
         self.stats_file = stats_file
         self.embedding_file = embedding_file
-        self.normalize = normalize
         self.loaded_data = loaded_data
         self.preprocess_data = preprocess_data
-        self.h5file = h5py.File(self.preprocess_data, 'r')
         self.train_class = TRAIN_CLASS
         self.test_class = TEST_CLASS
         self.overall_class = self.train_class | self.test_class
@@ -74,14 +72,15 @@ class CMTranslate(torchDataset):
         return self.load_feature_use(path), path
     
     def load_feature_use(self, path):
-        data = self.h5file[path][...]
+        h5file = h5py.File(self.preprocess_data, 'r')
+        data = h5file[path][...]
         return data
 
     def load_test_images(self, batch_size=512):
         ims = []
         label = []
         for path in self.path2class_image_test.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(torch.from_numpy(self.load_feature_use(path)))
             label.append(self.path2class_image_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -93,7 +92,7 @@ class CMTranslate(torchDataset):
         ims = []
         label = []
         for path in self.path2class_sketch_test.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(torch.from_numpy(self.load_feature_use(path)))
             label.append(self.path2class_sketch_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -237,7 +236,7 @@ class image2features:
         self.image_dir = image_dir
         self.sketch_dir = sketch_dir
         self.save_dir = save_dir
-        if not os.exists(self.save_dir):
+        if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         self.backbone = vgg16(pretrained=True, return_type=3, dropout=0)
         for param in self.backbone.parameters():

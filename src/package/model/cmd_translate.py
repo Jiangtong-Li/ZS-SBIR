@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.functional as F
 
-from src.package.model.variational_dropout import VariationalDropout
-from src.package.model.vgg import vgg16
-from src.package.loss.triplet_loss import _Triplet_loss
+from package.model.variational_dropout import VariationalDropout
+from package.model.vgg import vgg16
+from package.loss.triplet_loss import _Triplet_loss
 
 class Encoder_Decoder(nn.Module):
     """
@@ -19,10 +19,10 @@ class Encoder_Decoder(nn.Module):
         self.num_layers = num_layers
         self.mid_size = int((input_size+output_size)/2)
         encoder = list()
-        encoder += [nn.Linear(input_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.Dropout(dropout_prob)]
+        encoder += [nn.Linear(input_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(self.mid_size), nn.Dropout(dropout_prob)]
         for _ in range(num_layers-2):
-            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.Dropout(dropout_prob)]
-        encoder += [nn.Linear(self.mid_size, output_size), nn.LeakyReLU(inplace=True), nn.Dropout(dropout_prob)]
+            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(self.mid_size)]
+        encoder += [nn.Linear(self.mid_size, output_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(output_size)]
         self.encoder = nn.Sequential(*encoder)
     
     def forward(self, features):
@@ -36,8 +36,8 @@ class Variational_Sampler(nn.Module):
     def __init__(self, hidden_size):
         super(Variational_Sampler, self).__init__()
         self.hidden_size = hidden_size
-        self.mean_encoder = nn.Linear(hidden_size, hidden_size)
-        self.logvar_encoder = nn.Linear(hidden_size, hidden_size)
+        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
+        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
     
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5*logvar)
@@ -61,21 +61,35 @@ class Semantic_Preservation(nn.Module):
     def __init__(self, feature_size, semantic_size, dropout_prob, loss_fn):
         super(Semantic_Preservation, self).__init__()
         self.fea2sem = Encoder_Decoder(feature_size, semantic_size, dropout_prob, 2)
+        self.activation = nn.LeakyReLU()
         self.loss_fn = loss_fn
 
     def forward(self, x, target):
-        predict = self.fea2sem(x)
-        loss = torch.mean(self.loss_fn(x, target))
+        predict = self.activation(self.fea2sem(x))
+        loss = torch.mean(self.loss_fn(predict, target))
         return predict, loss
 
-class CMDT(nn.Module):
+class CosineDistance(nn.Module):
+    def __init__(self, dim=-1):
+        self.dim = dim
+    
+    def forward(self, input1, input2):
+        """
+        batch_size * hidden_dim
+        """
+        assert input1.shape == input2.shape
+        num = torch.sum(input1*input2, dim=self.dim)
+        denorm = torch.sqrt(torch.sum(torch.pow(input1, 2), dim=self.dim)) * torch.sqrt(torch.sum(torch.pow(input2, 2), dim=self.dim))
+        cosine_distance = 1 - num/denorm
+        return cosine_distance
+
+class CMDTrans_model(nn.Module):
     """
     The overall model of our zero-shot sketch based image retrieval using cross-modal domain translation
     """
-    def __init__(self, pca_size, hidden_size, semantic_size, pretrain_embedding, 
-                 from_pretrain=True, dropout_prob=0.3, fix_backbone=True, fix_embedding=True, 
-                 seman_dist='l2', triplet_dist='l2', margin=1):
-        super(CMDT, self).__init__()
+    def __init__(self, pca_size, hidden_size, semantic_size, pretrain_embedding, dropout_prob=0.3, 
+                 fix_embedding=True, seman_dist='cosine', triplet_dist='l2', margin=1, logger=None):
+        super(CMDTrans_model, self).__init__()
         # Dist Matrics
         self.l2_dist = nn.PairwiseDistance(p=2)
         self.cosine = nn.CosineSimilarity(dim=-1)
@@ -106,12 +120,14 @@ class CMDT(nn.Module):
         self.variational_sample = Variational_Sampler(hidden_size)
         self.sketch_decoder = Encoder_Decoder(hidden_size, pca_size, dropout_prob, 3)
         self.image_decoder = Encoder_Decoder(hidden_size*2, pca_size, dropout_prob, 3)
+        #self.image_decoder = Encoder_Decoder(hidden_size+pca_size, pca_size, dropout_prob, 3)
+        #self.image_decoder = Encoder_Decoder(hidden_size*2, pca_size, dropout_prob, 3)
         self.semantic_preserve = Semantic_Preservation(pca_size, semantic_size, dropout_prob, self.seman_dist)
 
         # Loss
         self.triplet_loss = _Triplet_loss(self.triplet_dist, margin)
     
-    def forward(self, image_p, image_n, sketch, semantics):
+    def forward(self, sketch, image_p, image_n, semantics):
         """
         image_p [batch_size, pca_size]
         image_n [batch_size, pca_size]
@@ -120,7 +136,7 @@ class CMDT(nn.Module):
         """
         # recode size info
         batch_size = image_p.shape[0]
-        pca_size = image_p.shape[1]
+        _pca_size = image_p.shape[1]
         # load semantics info
         semantics_embedding = self.semantics(semantics)
         semantics_embedding = semantics_embedding.reshape([batch_size, -1])
@@ -130,7 +146,9 @@ class CMDT(nn.Module):
         image_p_encode_feature_s = self.image_encoder_S(image_p)
         image_p_encode_feature_a = self.image_encoder_A(image_p)
         image_p_encode_feature_a_resampled, kl_loss = self.variational_sample(image_p_encode_feature_a) # kl loss(1)
-        image_p_sketch_feature_combine = torch.concat([image_p_encode_feature_a_resampled, sketch_encode_feature], dim=1)
+        image_p_sketch_feature_combine = torch.cat([image_p_encode_feature_a_resampled, sketch_encode_feature], dim=1)
+        #image_p_sketch_feature_combine = torch.cat([image_p_encode_feature_a_resampled, sketch], dim=1)
+        #image_p_sketch_feature_combine = torch.cat([torch.zeros_like(image_p_encode_feature_a_resampled).to(sketch_encode_feature.device), sketch_encode_feature], dim=1)
         image_translate = self.image_decoder(image_p_sketch_feature_combine)
         sketch_translate = self.sketch_decoder(image_p_encode_feature_s)
         _predicted_semantic, semantics_loss = self.semantic_preserve(image_translate, semantics_embedding) # seman loss(2)
@@ -138,7 +156,7 @@ class CMDT(nn.Module):
         triplet_loss = self.triplet_loss(image_p_encode_feature_s, image_n_encode_feature_s, sketch_encode_feature) # triplet loss(3)
         image_translate_loss = torch.mean(self.l2_dist(image_translate, image_p)) # image loss(5)
         sketch_translate_loss = torch.mean(self.l2_dist(sketch_translate, sketch)) # sketch loss(6)
-        orthogonality_loss = torch.mean(1-self.cosine(image_p_encode_feature_s, image_p_encode_feature_a)) # orthogonality loss(4)
+        orthogonality_loss = torch.mean(self.cosine(image_p_encode_feature_s, image_p_encode_feature_a)) # orthogonality loss(4)
         loss = dict()
         loss['kl'] = kl_loss
         loss['seman'] = semantics_loss
@@ -164,7 +182,7 @@ class CMDT(nn.Module):
         generated = list()
         for _ in range(sample_times):
             eps = torch.randn_like(x_hidden)
-            z = torch.concat([eps, x_hidden], dim=1)
+            z = torch.cat([eps, x_hidden], dim=1)
             image_translate = self.image_decoder(z)
             generated.append(image_translate)
         generated = torch.mean(torch.stack(generated, dim=-1),dim=-1)

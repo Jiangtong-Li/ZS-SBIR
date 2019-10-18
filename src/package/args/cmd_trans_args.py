@@ -9,10 +9,13 @@ def parse_config():
     parser.add_argument('--packed_pkl_nozs', type=str)
     parser.add_argument('--embedding_file', type=str)
     parser.add_argument('--preprocess_data', type=str)
+    parser.add_argument('--raw_data', type=str)
     parser.add_argument('--log_file', type=str)
     parser.add_argument('--shuffle', action='store_true')
+    parser.add_argument('--sample_times', type=int, default=10)
 
     parser.add_argument('--pca_size', type=int, default=2048)
+    parser.add_argument('--raw_size', type=int, default=5568)
     parser.add_argument('--hidden_size', type=int, default=1024)
     parser.add_argument('--semantics_size', type=int, default=300)
     parser.add_argument('--fix_embedding', action='store_true')

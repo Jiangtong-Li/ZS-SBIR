@@ -20,40 +20,13 @@ from package.loss.regularization import _Regularization
 from package.dataset.data_cmd_translate import CMDTrans_data
 from package.args.cmd_trans_args import parse_config
 from package.dataset.utils import make_logger
-
+from package import cal_matrics
 
 def update_lr(optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-def cal_matrics(image_f1, image_f2, image_l, sketch_f1, sketch_f2, sketch_l, lambda_i = 0.5, n=200):
-
-    dists_cosine1 = cdist(image_f1, sketch_f1, 'cosine')
-    dists_cosine2 = cdist(image_f2, sketch_f2, 'cosine')
-    precision_b = 0
-    mAP_b = 0.
-    lambda_b = 0.
-    for lambda_i in [0., 0.2, 0.4, 0.6, 0.8, 1.]:
-        dists = lambda_i*dists_cosine1 + (1-lambda_i)*dists_cosine2
-        rank = np.argsort(dists, 0)
-        ranksn = rank[:n, :].T
-        classesn = np.array([[image_l[i] == sketch_l[r] for i in ranksn[r]] for r in range(len(ranksn))]) # ske_size*n
-        precision = np.mean(classesn)
-        # Cal MAP
-        """
-        Test case: np.array([[1,0,1,0,0,1,0,0,1,1],[0,1,0,0,1,0,1,0,0,0]])
-        Answer: 0.53
-        """
-        mAP = np.mean(np.sum(classesn*np.cumsum(classesn, axis=1)/np.cumsum(np.ones(classesn.shape), axis=1), axis=1)/n)
-        if precision > precision_b:
-            precision_b = precision
-            lambda_b = lambda_i
-        if mAP > mAP_b:
-            mAP_b = mAP
-    return precision_b, mAP_b, lambda_b
-
 def train(args):
-    loss_weight = dict([('kl',0.01), ('seman',1), ('triplet', 1), ('orthogonality', 0.01), ('image', 1), ('sketch', 1)])
     writer = SummaryWriter()
     logger = make_logger(args.log_file)
 
@@ -64,7 +37,7 @@ def train(args):
 
     logger.info('Loading the data ...')
     data = CMDTrans_data(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, 
-                         packed, args.preprocess_data, zs=args.zs)
+                         packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=args.sample_times)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -74,11 +47,11 @@ def train(args):
     logger.info('Testing image size: {}'.format(len(data.path2class_image_test.keys())))
 
     logger.info('Building the model ...')
-    model = CMDTrans_model(args.pca_size, args.hidden_size, args.semantics_size, data.pretrain_embedding.float(), 
+    model = CMDTrans_model(args.pca_size, args.raw_size, args.hidden_size, args.semantics_size, data.pretrain_embedding.float(), 
                  dropout_prob=args.dropout, fix_embedding=args.fix_embedding, seman_dist=args.seman_dist, 
                  triplet_dist=args.triplet_dist, margin=args.margin, logger=logger)
     logger.info('Building the optimizer ...')
-    optimizer = Adam(params=model.parameters(), lr=args.lr)
+    optimizer = Adam(params=model.parameters(), lr=args.lr, betas=(0.5, 0.999))
     #optimizer = SGD(params=model.parameters(), lr=args.lr, momentum=0.9)
     l1_regularization = _Regularization(model, args.l1_weight, p=1, logger=logger)
     l2_regularization = _Regularization(model, args.l2_weight, p=2, logger=logger)
@@ -113,6 +86,8 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
+    loss_weight = dict([('kl',7.0), ('seman',0.5), ('triplet', 0.01), 
+                        ('orthogonality', 0.01), ('image', 0.4), ('sketch', 0.5)])
     while True:
         if patience <= 0:
             break
@@ -137,6 +112,8 @@ def train(args):
                 loss_l2_acm = 0.
 
             if global_step % args.save_every == 0 % args.save_every and batch_acm % args.cum_num == 0 and global_step :
+                if loss_weight['kl'] < 7.0:
+                    loss_weight['kl'] = loss_weight['kl'] + 0.2
                 if not os.path.exists(args.save_dir):
                     os.mkdir(args.save_dir)
                 torch.save({'args':args, 'model':model.state_dict(), 'optimizer':optimizer.state_dict()},
@@ -199,7 +176,7 @@ def train(args):
             batch_acm += 1
             if global_step <= args.warmup_steps:
                 update_lr(optimizer, args.lr*global_step/args.warmup_steps)
-            
+
             semantics_batch = semantics_batch.long()
             if args.gpu_id != -1:
                 sketch_batch = sketch_batch.cuda(args.gpu_id)
@@ -207,7 +184,6 @@ def train(args):
                 image_n_batch = image_n_batch.cuda(args.gpu_id)
                 semantics_batch = semantics_batch.cuda(args.gpu_id)
 
-            
             loss = model(sketch_batch, image_p_batch, image_n_batch, semantics_batch)
 
             loss_l1 = l1_regularization()
@@ -236,19 +212,15 @@ def train(args):
             writer.add_scalar('Loss/Sketch', loss_ske, global_step)
             writer.add_scalar('Loss/Reg_l1', (loss_l1.item() / args.l1_weight), global_step)
             writer.add_scalar('Loss/Reg_l2', (loss_l2.item() / args.l2_weight), global_step)
-            
-            #loss_ = loss_l2
+
             loss_ = 0
-            #for item in loss.keys():
-            #    loss_ += loss[item]*loss_weight[item]
-            loss_ += loss['image']*5
-            loss_ += loss['sketch']*10
-            loss_ += loss['triplet']
-            loss_ += loss['seman']
-            loss_ += loss['kl']*0.1
+            loss_ += loss['image']*loss_weight['image']
+            loss_ += loss['sketch']*loss_weight['sketch']
+            #loss_ += loss['triplet']*loss_weight['triplet']
+            loss_ += loss['seman']*loss_weight['seman']
+            loss_ += loss['kl']*loss_weight['kl']
             loss_.backward()
 
-            
             if batch_acm % args.cum_num == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()

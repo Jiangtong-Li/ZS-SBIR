@@ -8,13 +8,13 @@ from package.model.variational_dropout import VariationalDropout
 from package.model.vgg import vgg16
 from package.loss.triplet_loss import _Triplet_loss
 
-class Encoder_Decoder(nn.Module):
+class Encoder(nn.Module):
     """
     This is a default encoder/decoder to map features from one domain to another one.
     This general encoder contains several layers of MLP with Leaky ReLU as activation function. Dropout is also added during training
     """
     def __init__(self, input_size, output_size, dropout_prob, num_layers):
-        super(Encoder_Decoder, self).__init__()
+        super(Encoder, self).__init__()
         assert num_layers >= 2
         self.num_layers = num_layers
         self.mid_size = int((input_size+output_size)/2)
@@ -29,6 +29,27 @@ class Encoder_Decoder(nn.Module):
         out_feature = self.encoder(features)
         return out_feature
 
+class Decoder(nn.Module):
+    """
+    This is a default encoder/decoder to map features from one domain to another one.
+    This general encoder contains several layers of MLP with Leaky ReLU as activation function. Dropout is also added during training
+    """
+    def __init__(self, input_size, output_size, dropout_prob, num_layers):
+        super(Decoder, self).__init__()
+        assert num_layers >= 2
+        self.num_layers = num_layers
+        self.mid_size = int((input_size+output_size)/2)
+        encoder = list()
+        encoder += [nn.Linear(input_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.Dropout(dropout_prob)]
+        for _ in range(num_layers-2):
+            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.LeakyReLU(inplace=True)]
+        encoder += [nn.Linear(self.mid_size, output_size), nn.LeakyReLU(inplace=True)]
+        self.encoder = nn.Sequential(*encoder)
+    
+    def forward(self, features):
+        out_feature = self.encoder(features)
+        return out_feature
+
 class Variational_Sampler(nn.Module):
     """
     Variational sampler for image apperance features
@@ -36,8 +57,8 @@ class Variational_Sampler(nn.Module):
     def __init__(self, hidden_size):
         super(Variational_Sampler, self).__init__()
         self.hidden_size = hidden_size
-        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
-        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
+        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
+        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
     
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5*logvar)
@@ -60,7 +81,7 @@ class Semantic_Preservation(nn.Module):
     """
     def __init__(self, feature_size, semantic_size, dropout_prob, loss_fn):
         super(Semantic_Preservation, self).__init__()
-        self.fea2sem = Encoder_Decoder(feature_size, semantic_size, dropout_prob, 2)
+        self.fea2sem = Decoder(feature_size, semantic_size, dropout_prob, 2)
         self.activation = nn.LeakyReLU()
         self.loss_fn = loss_fn
 
@@ -87,7 +108,7 @@ class CMDTrans_model(nn.Module):
     """
     The overall model of our zero-shot sketch based image retrieval using cross-modal domain translation
     """
-    def __init__(self, pca_size, hidden_size, semantic_size, pretrain_embedding, dropout_prob=0.3, 
+    def __init__(self, pca_size, raw_size, hidden_size, semantic_size, pretrain_embedding, dropout_prob=0.3, 
                  fix_embedding=True, seman_dist='cosine', triplet_dist='l2', margin=1, logger=None):
         super(CMDTrans_model, self).__init__()
         # Dist Matrics
@@ -114,15 +135,16 @@ class CMDTrans_model(nn.Module):
         #if fix_backbone:
         #    for param in self.backbone.parameters():
         #        param.requires_grad = False
-        self.sketch_encoder = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
-        self.image_encoder_S = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
-        self.image_encoder_A = Encoder_Decoder(pca_size, hidden_size, dropout_prob, 3)
+        self.sketch_encoder = Encoder(pca_size, hidden_size, dropout_prob, 3)
+        self.image_encoder_S = Encoder(raw_size, hidden_size, dropout_prob, 3)
+        self.image_encoder_A = Encoder(raw_size, hidden_size, dropout_prob, 3)
+        #self.image_encoder_A = Encoder(pca_size*2, hidden_size, dropout_prob, 3)
         self.variational_sample = Variational_Sampler(hidden_size)
-        self.sketch_decoder = Encoder_Decoder(hidden_size, pca_size, dropout_prob, 3)
-        self.image_decoder = Encoder_Decoder(hidden_size*2, pca_size, dropout_prob, 3)
+        self.sketch_decoder = Decoder(hidden_size, pca_size, dropout_prob, 3)
+        self.image_decoder = Decoder(hidden_size*2, raw_size, dropout_prob, 3)
         #self.image_decoder = Encoder_Decoder(hidden_size+pca_size, pca_size, dropout_prob, 3)
         #self.image_decoder = Encoder_Decoder(hidden_size*2, pca_size, dropout_prob, 3)
-        self.semantic_preserve = Semantic_Preservation(pca_size, semantic_size, dropout_prob, self.seman_dist)
+        self.semantic_preserve = Semantic_Preservation(raw_size, semantic_size, dropout_prob, self.seman_dist)
 
         # Loss
         self.triplet_loss = _Triplet_loss(self.triplet_dist, margin)
@@ -145,6 +167,7 @@ class CMDTrans_model(nn.Module):
         image_n_encode_feature_s = self.image_encoder_S(image_n)
         image_p_encode_feature_s = self.image_encoder_S(image_p)
         image_p_encode_feature_a = self.image_encoder_A(image_p)
+        #image_p_encode_feature_a = self.image_encoder_A(torch.cat([image_p,sketch], dim=1))
         image_p_encode_feature_a_resampled, kl_loss = self.variational_sample(image_p_encode_feature_a) # kl loss(1)
         image_p_sketch_feature_combine = torch.cat([image_p_encode_feature_a_resampled, sketch_encode_feature], dim=1)
         #image_p_sketch_feature_combine = torch.cat([image_p_encode_feature_a_resampled, sketch], dim=1)

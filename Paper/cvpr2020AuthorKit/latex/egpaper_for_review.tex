@@ -113,7 +113,7 @@ First line of institution2 address\\
 There will be five parts in this section. 
 Sec. \ref{3.1} defines the our targeted problem and briefly introduce our framework. 
 Sec. \ref{3.2} introduce the feature extractor. 
-Sec. \ref{3.3} introduce the parallel VAEs. 
+Sec. \ref{3.3} introduce the cross-domain translation model.
 Sec. \ref{3.4} introduce the semantic preservation module. 
 Sec. \ref{3.5} introduce the design of loss functions during training procedure.
 
@@ -129,9 +129,7 @@ Our model need to disentangle structure representations of image using data in $
 During test, given $x^{ske}$ from $S_{test}$, our model need to retrieve several images from test images candidate.
 
 Our goal is to learn a two-way map between image feature domain to sketch feature domain. 
-To this end, we propose a new deep network (shown in Figure \ref{fig:2}), which contains feature extractor $F(\cdot)$, two structure encoders $\{E_{s}^{img}(\cdot), E^{ske}(\cdot)\}$, one appearance encoder $E^{img}_{a}(\cdot)$, two feature decoder $\{D^{img}(\cdot, \cdot), D^{ske}(\cdot)\}$ and a semantic decoder $S(\cdot)$. 
-Note that by combining the encoders and decoders, our model can be regarded as two VAEs working parallel, which target to reconstruct sketch features from image and reconstruct image features from both sketches and images. 
-To better preserve the semantics information within the sketches and images, we also add a semantic decoder to preserve semantics information while reconstructing the image features.
+To this end, we propose a new deep network (shown in Figure \ref{fig:2}), which contains feature extractor $F(\cdot)$, two encoders $\{E_{s}^{img}(\cdot), E^{ske}(\cdot)\}$ and two decoders $\{D^{img}(\cdot, \cdot), D^{ske}(\cdot)\}$. While translating the sketch domain to image domain, we find that the sketch features leak of image appearance information heavily. To compensate the uncertain information, we add one appearance encoder $E^{img}_{a}(\cdot)$. Besides, large intra-class variance of sketches makes the learning of the conditional decoder more difficult. To tackle this problem,  we add a semantic preserver $S(\cdot)$ to maintain class information during the translation. 
 
 \subsection{Feature Extractor} \label{3.2}
 Considering the abstractness and visual sparsity of sketch, it is challenging to extract feature from sketch. 
@@ -146,7 +144,7 @@ f^{\cdot} = F(x_i^{\cdot}) = [f_{fc}, GAP(f_5), GAP(f_4), GAP(f_3)],
 \end{align}
 where $GAP(\cdot)$ means global spatial average pooling and $[\cdot,\cdot]$ means the concatenation operation between vectors. Following the instruction in \cite{wang2019stacked}, a Principal Component Analysis algorithm is adopted to reduce the dimension of the extracted feature, which is helpful to not only improve the computational effiency but remove some redundant information.
 
-\subsection{Parallel VAE} \label{3.3}
+\subsection{Cross Translation Model} \label{3.3}
 Generative approaches have shown their power in ZS-SBIR \cite{wang2019stacked,yelamarthi2018zero}. But both of these two papers, only encode the image in one encoder, which makes the appearance and the structure features fused together. When training the VAE based model, the decoder may ignore the condition information in sketch feature. Motivated by \cite{zhu2017toward}, we can regard image and sketch as two domains, where image domain have richer information than sketch domain. Our model is expected to learn a two-way mapping between this two domains. To this end, we devise a parallel VAE model, where the sketch VAE maps the image feature to the sketch domain and the image VAE maps the sketch domain to image domain with additional image appearance to complement the missing information.
 
 \subsubsection{Overall structure}

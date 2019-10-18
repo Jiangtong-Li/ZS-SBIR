@@ -17,17 +17,17 @@ from tqdm import tqdm
 from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE_SIZE, SEMANTICS_REPLACE
 from package.model.vgg import vgg16
 
-class CMTranslate(torchDataset):
-    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, normalize=False, zs=True):
-        super(CMTranslate, self).__init__()
+class CMDTrans_data(torchDataset):
+    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, raw_data, zs=True, sample_time=10):
+        super(CMDTrans_data, self).__init__()
         self.sketch_dir = sketch_dir
         self.image_dir = image_dir
         self.stats_file = stats_file
         self.embedding_file = embedding_file
-        self.normalize = normalize
         self.loaded_data = loaded_data
         self.preprocess_data = preprocess_data
-        self.h5file = h5py.File(self.preprocess_data, 'r')
+        self.raw_data = raw_data
+        self.sample_time = sample_time
         self.train_class = TRAIN_CLASS
         self.test_class = TEST_CLASS
         self.overall_class = self.train_class | self.test_class
@@ -49,10 +49,17 @@ class CMTranslate(torchDataset):
         random.shuffle(self.id2path)
 
     def __getitem__(self, index):
-        sketch = self.load_feature_use(self.id2path[index])
+        sketch = self.load_feature_use(self.id2path[index], 'sketch')
         cla = self.path2class_sketch[self.id2path[index]]
-        image_p, _path_p = self.pair_similar(cla)
-        image_n, _path_n = self.pair_dissimilar(cla)
+        image_p = list()
+        image_n = list()
+        for _ in range(self.sample_time):
+            _image_p, _path_p = self.pair_similar(cla)
+            _image_n, _path_n = self.pair_dissimilar(cla)
+            image_p.append(_image_p)
+            image_n.append(_image_n)
+        image_p = np.mean(np.stack(image_p, axis=1), axis=1)
+        image_n = np.mean(np.stack(image_n, axis=1), axis=1)
         semantics = np.zeros((1))
         semantics[0] = self.class2id[cla]
         return sketch, image_p, image_n, semantics
@@ -63,25 +70,29 @@ class CMTranslate(torchDataset):
     def pair_similar(self, cls):
         path_list = list(self.class2path_image[cls])
         path = random.choice(path_list)
-        return self.load_feature_use(path), path
-    
+        return self.load_feature_use(path, 'image'), path
+
     def pair_dissimilar(self, cls):
         class_list = list(self.class2path_image.keys())
         class_list.remove(cls)
         choice = random.choice(class_list)
         path_list = list(self.class2path_image[choice])
         path = random.choice(path_list)
-        return self.load_feature_use(path), path
+        return self.load_feature_use(path, 'image'), path
     
-    def load_feature_use(self, path):
-        data = self.h5file[path][...]
+    def load_feature_use(self, path, mode):
+        if mode=='sketch':
+            h5file = h5py.File(self.preprocess_data, 'r')
+        else:
+            h5file = h5py.File(self.raw_data, 'r')
+        data = h5file[path][...]
         return data
 
     def load_test_images(self, batch_size=512):
         ims = []
         label = []
         for path in self.path2class_image_test.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(torch.from_numpy(self.load_feature_use(path, 'image')))
             label.append(self.path2class_image_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -93,7 +104,7 @@ class CMTranslate(torchDataset):
         ims = []
         label = []
         for path in self.path2class_sketch_test.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(torch.from_numpy(self.load_feature_use(path, 'sketch')))
             label.append(self.path2class_sketch_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -105,7 +116,7 @@ class CMTranslate(torchDataset):
         ims = []
         label = []
         for path in self.path2class_image.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(self.load_feature_use(path, 'image'))
             label.append(self.path2class_image[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -117,7 +128,7 @@ class CMTranslate(torchDataset):
         ims = []
         label = []
         for path in self.path2class_sketch.keys():
-            ims.append(self.load_feature_use(path))
+            ims.append(self.load_feature_use(path, 'sketch'))
             label.append(self.path2class_sketch[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -237,7 +248,7 @@ class image2features:
         self.image_dir = image_dir
         self.sketch_dir = sketch_dir
         self.save_dir = save_dir
-        if not os.exists(self.save_dir):
+        if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         self.backbone = vgg16(pretrained=True, return_type=3, dropout=0)
         for param in self.backbone.parameters():

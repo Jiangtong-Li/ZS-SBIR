@@ -217,7 +217,7 @@ def train(args):
             loss_ += loss['image']*loss_weight['image']
             loss_ += loss['sketch']*loss_weight['sketch']
             #loss_ += loss['triplet']*loss_weight['triplet']
-            loss_ += loss['seman']*loss_weight['seman']
+            #loss_ += loss['seman']*loss_weight['seman']
             loss_ += loss['kl']*loss_weight['kl']
             loss_.backward()
 

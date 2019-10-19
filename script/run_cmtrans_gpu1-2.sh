@@ -4,12 +4,12 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --packed_pkl_nozs ./data/preprocessed/cm_trans_sketch_all_unpair/nozs_packed.pkl \
                                --packed_pkl_zs ./data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
-                               --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_1024.h5py \
+                               --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_2048.h5py \
                                --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_5568.h5py \
                                --log_file ./log/cmd_trans_gpu1-2.log \
                                --shuffle \
                                --sample_times 10 \
-                               --pca_size 1024 \
+                               --pca_size 2048 \
                                --raw_size 5568 \
                                --hidden_size 2048 \
                                --semantics_size 300 \
@@ -20,7 +20,7 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --patience 20 \
                                --batch_size 128 \
                                --num_worker 4 \
-                               --dropout 0.4 \
+                               --dropout 0.5 \
                                --warmup_steps 1000 \
                                --lr 2e-4 \
                                --print_every 100 \

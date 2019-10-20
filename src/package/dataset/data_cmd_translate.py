@@ -18,8 +18,9 @@ from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE
 from package.model.vgg import vgg16
 
 class CMDTrans_data(torchDataset):
-    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, raw_data, zs=True, sample_time=10):
+    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, raw_data, zs=True, sample_time=10, cvae=False):
         super(CMDTrans_data, self).__init__()
+        self.cvae = cvae
         self.sketch_dir = sketch_dir
         self.image_dir = image_dir
         self.stats_file = stats_file
@@ -49,7 +50,10 @@ class CMDTrans_data(torchDataset):
         random.shuffle(self.id2path)
 
     def __getitem__(self, index):
-        sketch = self.load_feature_use(self.id2path[index], 'sketch')
+        if not self.cvae:
+            sketch = self.load_feature_use(self.id2path[index], 'sketch')
+        else:
+            sketch = self.load_feature_use(self.id2path[index], 'image')
         cla = self.path2class_sketch[self.id2path[index]]
         image_p = list()
         image_n = list()

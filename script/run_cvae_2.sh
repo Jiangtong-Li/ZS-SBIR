@@ -6,11 +6,11 @@ python ./src/main_cvae.py  --sketch_dir ./data/256x256/sketch/tx_000100000000 \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
                                --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024.h5py \
                                --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568.h5py \
-                               --log_file ./log/cvae-card2.log \
+                               --log_file ./log/cvae-card2_5568.log \
                                --shuffle \
                                --sample_times 1 \
                                --pca_size 1024 \
-                               --raw_size 4096 \
+                               --raw_size 5568 \
                                --hidden_size 1024 \
                                --semantics_size 300 \
                                --fix_embedding \
@@ -25,7 +25,7 @@ python ./src/main_cvae.py  --sketch_dir ./data/256x256/sketch/tx_000100000000 \
                                --lr 2e-4 \
                                --print_every 100 \
                                --save_every 500 \
-                               --save_dir ./model/cvae-card2/ \
+                               --save_dir ./model/cvae-card2_5568/ \
                                --gpu_id 1 \
                                --cum_num 1 \
                                --zs

@@ -46,7 +46,8 @@ class VGG(nn.Module):
                 nn.Linear(512 * 7 * 7, 4096),
                 nn.ReLU(True),
                 nn.Dropout(dropout),
-                nn.Linear(4096, 4096)
+                nn.Linear(4096, 4096), 
+                nn.ReLU(inplace=True)
             )
         elif return_type == 2:
             self.classifier = None

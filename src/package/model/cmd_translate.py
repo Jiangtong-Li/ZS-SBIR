@@ -19,12 +19,12 @@ class Encoder(nn.Module):
         self.num_layers = num_layers
         self.mid_size = int((input_size+output_size)/2)
         encoder = list()
-        encoder += [nn.Linear(input_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(self.mid_size), nn.Dropout(dropout_prob)]
+        encoder += [nn.Linear(input_size, self.mid_size), nn.ReLU(inplace=True), nn.BatchNorm1d(self.mid_size), nn.Dropout(dropout_prob)]
         for _ in range(num_layers-2):
-            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(self.mid_size)]
-        encoder += [nn.Linear(self.mid_size, output_size), nn.LeakyReLU(inplace=True), nn.BatchNorm1d(output_size)]
+            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.ReLU(inplace=True), nn.BatchNorm1d(self.mid_size), nn.Dropout(dropout_prob)]
+        encoder += [nn.Linear(self.mid_size, output_size), nn.ReLU(inplace=True), nn.BatchNorm1d(output_size)]
         self.encoder = nn.Sequential(*encoder)
-    
+
     def forward(self, features):
         out_feature = self.encoder(features)
         return out_feature
@@ -40,10 +40,10 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.mid_size = int((input_size+output_size)/2)
         encoder = list()
-        encoder += [nn.Linear(input_size, self.mid_size), nn.LeakyReLU(inplace=True), nn.Dropout(dropout_prob)]
+        encoder += [nn.Linear(input_size, self.mid_size), nn.ReLU(inplace=True)]
         for _ in range(num_layers-2):
-            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.LeakyReLU(inplace=True)]
-        encoder += [nn.Linear(self.mid_size, output_size), nn.LeakyReLU(inplace=True)]
+            encoder += [nn.Linear(self.mid_size, self.mid_size), nn.ReLU(inplace=True)]
+        encoder += [nn.Linear(self.mid_size, output_size)]
         self.encoder = nn.Sequential(*encoder)
     
     def forward(self, features):
@@ -57,17 +57,17 @@ class Variational_Sampler(nn.Module):
     def __init__(self, hidden_size):
         super(Variational_Sampler, self).__init__()
         self.hidden_size = hidden_size
-        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
-        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
-    
+        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
+        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
+
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
         return mean + eps * std
-    
+
     def lossfn(self, mean, logvar):
-        return -0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp())
-    
+        return torch.mean(-0.5 * torch.sum(1 + logvar - mean.pow(2) - logvar.exp(), dim=1))
+
     def forward(self, x):
         x_mean = self.mean_encoder(x)
         x_logvar = self.logvar_encoder(x)
@@ -82,13 +82,20 @@ class Semantic_Preservation(nn.Module):
     def __init__(self, feature_size, semantic_size, dropout_prob, loss_fn):
         super(Semantic_Preservation, self).__init__()
         self.fea2sem = Decoder(feature_size, semantic_size, dropout_prob, 2)
-        self.activation = nn.LeakyReLU()
+        self.activation = nn.ReLU()
         self.loss_fn = loss_fn
 
     def forward(self, x, target):
         predict = self.activation(self.fea2sem(x))
         loss = torch.mean(self.loss_fn(predict, target))
         return predict, loss
+
+class MSE(nn.Module):
+    def __init__(self):
+        super(MSE, self).__init__()
+
+    def forward(self, x_true, x_pred):
+        return torch.mean(torch.pow(x_pred-x_true, 2), dim=-1)
 
 class CosineDistance(nn.Module):
     def __init__(self, dim=-1):
@@ -112,7 +119,7 @@ class CMDTrans_model(nn.Module):
                  fix_embedding=True, seman_dist='cosine', triplet_dist='l2', margin=1, logger=None):
         super(CMDTrans_model, self).__init__()
         # Dist Matrics
-        self.l2_dist = nn.PairwiseDistance(p=2)
+        self.l2_dist = MSE()
         self.cosine = nn.CosineSimilarity(dim=-1)
         if seman_dist == 'l2':
             self.seman_dist = self.l2_dist

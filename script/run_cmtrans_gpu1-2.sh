@@ -8,7 +8,7 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_5568.h5py \
                                --log_file ./log/cmd_trans_gpu1-2.log \
                                --shuffle \
-                               --sample_times 10 \
+                               --sample_times 1 \
                                --pca_size 1024 \
                                --raw_size 5568 \
                                --hidden_size 1024 \

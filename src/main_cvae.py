@@ -37,7 +37,8 @@ def train(args):
 
     logger.info('Loading the data ...')
     data = CMDTrans_data(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, 
-                         packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, cvae=True)
+                         packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, 
+                         cvae=True, paired=True, cut_part=True)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -50,7 +51,7 @@ def train(args):
     model = CVAE(args.raw_size, args.hidden_size, dropout_prob=args.dropout, logger=logger)
     logger.info('Building the optimizer ...')
     optimizer = Adam(params=model.parameters(), lr=args.lr, betas=(0.5, 0.999))
-    #optimizer = SGD(params=model.parameters(), lr=args.lr, momentum=0.9)
+    #optimizer = SGD(params=model.parameters(), lr=1, momentum=0.9)
     l1_regularization = _Regularization(model, args.l1_weight, p=1, logger=logger)
     l2_regularization = _Regularization(model, args.l2_weight, p=2, logger=logger)
 
@@ -81,7 +82,7 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',1.0), ('image', 10.0), ('sketch', 10.0)])
+    loss_weight = dict([('kl',1.0), ('image', 1.0), ('sketch', 10.0)])
     while True:
         if patience <= 0:
             break

@@ -18,9 +18,12 @@ from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE
 from package.model.vgg import vgg16
 
 class CMDTrans_data(torchDataset):
-    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, raw_data, zs=True, sample_time=10, cvae=False):
+    def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, 
+                 raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False):
         super(CMDTrans_data, self).__init__()
         self.cvae = cvae
+        self.cut_part = cut_part
+        self.paired = paired
         self.sketch_dir = sketch_dir
         self.image_dir = image_dir
         self.stats_file = stats_file
@@ -54,12 +57,16 @@ class CMDTrans_data(torchDataset):
             sketch = self.load_feature_use(self.id2path[index], 'sketch')
         else:
             sketch = self.load_feature_use(self.id2path[index], 'image')
+        if self.cut_part:
+            sketch = sketch[-4096:]
         cla = self.path2class_sketch[self.id2path[index]]
         image_p = list()
         image_n = list()
         for _ in range(self.sample_time):
-            _image_p, _path_p = self.pair_similar(cla)
-            _image_n, _path_n = self.pair_dissimilar(cla)
+            _image_p, _path_p = self.pair_similar(self.id2path[index])
+            if self.cut_part:
+                _image_p = _image_p[-4096:]
+            _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
             image_p.append(_image_p)
             image_n.append(_image_n)
         image_p = np.mean(np.stack(image_p, axis=1), axis=1)
@@ -71,12 +78,23 @@ class CMDTrans_data(torchDataset):
     def __len__(self):
         return len(self.id2path)
 
-    def pair_similar(self, cls):
+    def pair_similar(self, sk_path):
+        path = None
+        cls = self.path2class_sketch[sk_path]
         path_list = list(self.class2path_image[cls])
-        path = random.choice(path_list)
+        if self.paired:
+            match_item = sk_path.split('/')[-1].split('-')[0]
+            for item in path_list:
+                if match_item in item:
+                    path = item
+        else:
+            path = random.choice(path_list)
+        if path is None:
+            path = random.choice(path_list)
         return self.load_feature_use(path, 'image'), path
 
-    def pair_dissimilar(self, cls):
+    def pair_dissimilar(self, sk_path):
+        cls = self.path2class_sketch[sk_path]
         class_list = list(self.class2path_image.keys())
         class_list.remove(cls)
         choice = random.choice(class_list)
@@ -96,7 +114,10 @@ class CMDTrans_data(torchDataset):
         ims = []
         label = []
         for path in self.path2class_image_test.keys():
-            ims.append(torch.from_numpy(self.load_feature_use(path, 'image')))
+            singal_img = self.load_feature_use(path, 'image')
+            if self.cut_part:
+                singal_img = singal_img[-4096:]
+            ims.append(torch.from_numpy(singal_img))
             label.append(self.path2class_image_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -108,7 +129,13 @@ class CMDTrans_data(torchDataset):
         ims = []
         label = []
         for path in self.path2class_sketch_test.keys():
-            ims.append(torch.from_numpy(self.load_feature_use(path, 'sketch')))
+            if not self.cvae:
+                sketch = self.load_feature_use(path, 'sketch')
+            else:
+                sketch = self.load_feature_use(path, 'image')
+            if self.cut_part:
+                sketch = sketch[-4096:]
+            ims.append(torch.from_numpy(sketch))
             label.append(self.path2class_sketch_test[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label

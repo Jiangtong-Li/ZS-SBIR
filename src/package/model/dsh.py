@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 # import tensorboardX as tbx
 
-
 class Flatten(nn.Module):
     def __init__(self):
         super(Flatten, self).__init__()

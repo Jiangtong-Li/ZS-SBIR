@@ -203,6 +203,7 @@ def train(args):
         args.batch_size = 2
         args.npy_dir = NPY_FOLDER_SKETCHY
 
+
     # logger.info("try loading data_train")
     data_train = DSH_dataloader(folder_sk=sketch_folder, folder_im=im_folder, clss=train_class, folder_nps=args.npy_dir,
                                 folder_imsk=imsk_folder, normalize01=False, doaug=False, m=args.m, path_semantic=path_semantic,

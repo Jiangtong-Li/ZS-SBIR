@@ -133,3 +133,6 @@ dmypy.json
 /runs/
 cv2
 np
+.texpadtmp/
+*pdf
+./src/test.py

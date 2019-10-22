@@ -66,12 +66,12 @@ class CVAE(nn.Module):
         _batch_size = image.shape[0]
         _raw_size = image.shape[1]
         # model
-        combine_feature = torch.cat([sketch, image], dim=1)
-        encoded = self.encoder(combine_feature)
-        encoded_resampled, kl_loss = self.variational_sample(encoded) # kl loss(1)
-        encoded_resampled_combine = torch.cat([encoded_resampled, sketch], dim=1)
-        image_recon = self.image_decoder(encoded_resampled_combine)
-        sketch_recon = self.sketch_decoder(image_recon)
+        combine_feature = torch.cat([sketch, image], dim=1) #[batch_size, raw_size*2]
+        encoded = self.encoder(combine_feature) #[batch_size, hidden_size]
+        encoded_resampled, kl_loss = self.variational_sample(encoded) # kl loss(1) [batch_size, hidden_size]
+        encoded_resampled_combine = torch.cat([encoded_resampled, sketch], dim=1) #[batch_size, hidden_size+raw_size]
+        image_recon = self.image_decoder(encoded_resampled_combine) #[batch_size, raw_size]
+        sketch_recon = self.sketch_decoder(image_recon) #[batch_size, raw_size]
         # loss
         image_translate_loss = torch.mean(self.l2_dist(image_recon, image)) # image loss(5)
         sketch_translate_loss = torch.mean(self.l2_dist(sketch_recon, sketch)) # sketch loss(6)

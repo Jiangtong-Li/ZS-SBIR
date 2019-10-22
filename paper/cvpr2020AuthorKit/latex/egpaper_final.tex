@@ -25,25 +25,17 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{Zero-Shot Sketch-Based Image Retrieval with Disentangled Representation}
+\title{Zero-Shot Sketch-Based Image Retrieval with Cross-modal Translation}
 
-%\author{First Author\\
-%Institution1\\
-%Institution1 address\\
-%{\tt\small firstauthor@i1.org}
-%\and
-%Second Author\\
-%Institution2\\
-%First line of institution2 address\\
-%{\tt\small secondauthor@i2.org}
-%}
+\author{Yi Xu$^{\dag}$ \thanks{$^{\dag}$ Corresponding author. If you have any question, you can contact with \tt{xuyi\_2019@sjtu.edu.cn}},  Yi'an Li, Jiangtong Li, Siqi Liu, Jiarui Jin  \\
+Department of Computer Science and Engineering, Shanghai Jiao Tong University \\
+}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
 % just like the second author.
 % To save space, use either the email address or home page, not both
 
-\author{Authors Anonymous}
 
 
 \maketitle
@@ -51,7 +43,12 @@
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-   pass
+   Zero-shot sketch-based image retrieval (ZS-SBIR) is a task of cross-domain image retrieval from a natural image gallery with free-hand sketch under a zero-shot scenario. 
+   Previous works mostly focus on a generative approach that takes a highly abstract and sparse sketch as input and then synthesizes the corresponding natural image. 
+   However, fusing the sketch features and image features together during encoding weaken the generative capability of the decoder, besides, the generative models prone to use paired data to during training, which also waste a large amount of unpaired data and hence achieve unsatisfactory retrieval performance. 
+   In this paper, we propose a novel cross-modal domain translation network to make use of the large amount of unpaired data and strengthen the decoder. 
+   Specifically, we devise an asymmetrical translation network, which divide the hidden space into structure space and appearance space. To compensate uncertain appearance information in structure space, we also add an extra information compensation module before image decoding.
+   In order to make use of large amount unpaired data, we add a ranking loss in structure space and design a new retrieval criterion to take advantage from both regressive model and generative model.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
@@ -102,12 +99,12 @@
 \subsection{Disentangled Representation}
 
 \section{Methodology}
-There will be five parts in this section. Sec. \ref{3.1} defines the our targeted problem and briefly introduce our framework. Sec.\ref{3.2} introduce the encoders in our model. Sec. \ref{3.3} introduce the decoder in our model. Sec. \ref{3.4} introduce the discriminator in our model. Sec. \ref{3.5} introduce the design of loss functions during training procedure.
+%There will be five parts in this section. Sec. \ref{3.1} defines the our targeted problem and briefly introduce our framework. Sec.\ref{3.2} introduce the encoders in our model. Sec. \ref{3.3} introduce the decoder in our model. Sec. \ref{3.4} introduce the discriminator in our model. Sec. \ref{3.5} introduce the design of loss functions during training procedure.
 
 \subsection{Problem Definition and Overall model}\label{3.1}
-In this paper, we focus on solving the problem of hand-free sketch-based image retrieval using disentangled feature representation under zero-shot setup, where only the sketchs and images from seen classes are used during training stage. Our proposed framework is expected to use the sketchs to retrieve the images, the categories of which have never appeared during training.
+%In this paper, we focus on solving the problem of hand-free sketch-based image retrieval using disentangled feature representation under zero-shot setup, where only the sketchs and images from seen classes are used during training stage. Our proposed framework is expected to use the sketchs to retrieve the images, the categories of which have never appeared during training.
 
-We first provide a definition of the SBIR in zero-shot setup. Given a dataset $S=\{(x_i^{img}, x_i^{ske}, x_i^{sem}, y_i)|y_i \in \mathcal{Y}\}$, where $x_i^{img}$, $x_i^{ske}$, $x_i^{sem}$ and $y_i$ corresponding to the image, sketch, semantic representation and 
+%We first provide a definition of the SBIR in zero-shot setup. Given a dataset $S=\{(x_i^{img}, x_i^{ske}, x_i^{sem}, y_i)|y_i \in \mathcal{Y}\}$, where $x_i^{img}$, $x_i^{ske}$, $x_i^{sem}$ and $y_i$ corresponding to the image, sketch, semantic representation and 
 
 \subsection{Encoder}\label{3.2}
 
@@ -149,13 +146,6 @@ We first provide a definition of the SBIR in zero-shot setup. Given a dataset $S
 \subsection{Case study}
 
 \section{Conclusion}
-
-\section{To Discuss}
-\begin{itemize}
-	\item Whether to generator the whole image/sketch.
-	\item If the poses between the image and the sketch are different, can the model learn the sketch information between image and sketch.
-	\item Where to add the semantics information to further supervise the model's training.
-\end{itemize}
 
 
 {\small

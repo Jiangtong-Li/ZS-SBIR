@@ -86,7 +86,7 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',7.0), ('seman',0.5), ('triplet', 0.01), 
+    loss_weight = dict([('kl',7.0), ('seman',0.5), ('triplet', 0.04), 
                         ('orthogonality', 0.01), ('image', 0.4), ('sketch', 0.5)])
     while True:
         if patience <= 0:
@@ -216,8 +216,8 @@ def train(args):
             loss_ = 0
             loss_ += loss['image']*loss_weight['image']
             loss_ += loss['sketch']*loss_weight['sketch']
-            #loss_ += loss['triplet']*loss_weight['triplet']
-            loss_ += loss['seman']*loss_weight['seman']
+            loss_ += loss['triplet']*loss_weight['triplet']
+            #loss_ += loss['seman']*loss_weight['seman']
             loss_ += loss['kl']*loss_weight['kl']
             loss_.backward()
 

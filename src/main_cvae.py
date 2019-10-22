@@ -37,7 +37,8 @@ def train(args):
 
     logger.info('Loading the data ...')
     data = CMDTrans_data(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, 
-                         packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, cvae=True)
+                         packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, 
+                         cvae=True, paired=True, cut_part=True)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -50,7 +51,7 @@ def train(args):
     model = CVAE(args.raw_size, args.hidden_size, dropout_prob=args.dropout, logger=logger)
     logger.info('Building the optimizer ...')
     optimizer = Adam(params=model.parameters(), lr=args.lr, betas=(0.5, 0.999))
-    #optimizer = SGD(params=model.parameters(), lr=args.lr, momentum=0.9)
+    #optimizer = SGD(params=model.parameters(), lr=1, momentum=0.9)
     l1_regularization = _Regularization(model, args.l1_weight, p=1, logger=logger)
     l2_regularization = _Regularization(model, args.l2_weight, p=2, logger=logger)
 
@@ -81,11 +82,13 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',1.0), ('image', 10.0), ('sketch', 10.0)])
+    loss_weight = dict([('kl',1.0), ('image', 1.0), ('sketch', 10.0)])
     while True:
         if patience <= 0:
             break
         for sketch_batch, image_p_batch, _image_n_batch, _semantics_batch in dataloader_train:
+            sketch_batch = sketch_batch.float()
+            image_p_batch = image_p_batch.float()
             if global_step % args.print_every == 0 % args.print_every and global_step and batch_acm % args.cum_num == 0:
                 logger.info('*** Iter {} ***'.format(global_step))
                 logger.info('        Loss/KL {:.3}'.format(loss_kl_acm/args.print_every/args.cum_num))
@@ -111,6 +114,7 @@ def train(args):
                 image_label = list()
                 image_feature = list()
                 for image, label in data.load_test_images(batch_size=args.batch_size):
+                    image = image.float()
                     if args.gpu_id != -1:
                         image = image.cuda(args.gpu_id)
                     image_label += label
@@ -121,6 +125,7 @@ def train(args):
                 sketch_label = list()
                 sketch_feature = list()
                 for sketch, label in data.load_test_sketch(batch_size=args.batch_size):
+                    sketch = sketch.float()
                     if args.gpu_id != -1:
                         sketch = sketch.cuda(args.gpu_id)
                     sketch_label += label

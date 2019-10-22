@@ -17,22 +17,25 @@ from torch.utils.tensorboard import SummaryWriter
 
 from package.model.zsim import ZSIM
 from package.loss.regularization import _Regularization
-from package.dataset.data_cm_translate import CMTranslate
+from package.dataset.data_cmd_translate import CMDTrans_data
 from package.args.zsih_args import parse_config
 from package.dataset.utils import make_logger
+relu = nn.ReLU()
 
 #ckpt = torch.load('/home/jiangtongli/Lab_Work/ZS-SBIR/model/zsih_test1/Iter_4000.pkl', map_location='cpu')
 
 #args = ckpt['args']
 
-data = CMTranslate('./data/256x256/sketch/tx_000100000000', 
-                   './data/256x256/EXTEND_image_sketchy', 
-                   './data/info/stats.csv', 
-                   './data/GoogleNews-vectors-negative300.bin', 
-                   './data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl', 
-                   './data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_5568.h5py')
+data = CMDTrans_data('./data/256x256/sketch/tx_000100000000', 
+                     './data/256x256/EXTEND_image_sketchy', 
+                     './data/info/stats.csv', 
+                     './data/GoogleNews-vectors-negative300.bin', 
+                     './data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl', 
+                     './data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_1024.h5py', 
+                     './data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568.h5py',
+                     cvae=True, sample_time=1, paired=False)
 
-dataLoader = DataLoader(dataset=data, batch_size=64, num_workers=8, shuffle=True)
+dataLoader = DataLoader(dataset=data, batch_size=10000, num_workers=8, shuffle=True)
 
 # model = ZSIM(args.hidden_size, args.hashing_bit, args.semantics_size, data.pretrain_embedding.float(), 
 #              adj_scaler=args.adj_scaler, dropout=args.dropout, fix_cnn=args.fix_cnn, 
@@ -45,6 +48,18 @@ dataLoader = DataLoader(dataset=data, batch_size=64, num_workers=8, shuffle=True
 iter = 0
 b_time = time.time()
 for sketch, image_p, image_n, semantics in dataLoader:
+    nonzeroi1 = np.mean(image_p.cpu().detach().numpy() == 0)
+    nonzeros1 = np.mean(sketch.cpu().detach().numpy() == 0)
+    image_p = relu(image_p)
+    sketch = relu(sketch)
+    nonzeroi2 = np.mean(image_p.cpu().detach().numpy() == 0)
+    nonzeros2 = np.mean(sketch.cpu().detach().numpy() == 0)
+    print(nonzeroi1)
+    print(nonzeroi2)
+    print()
+    print(nonzeros1)
+    print(nonzeros2)
+    print()
     iter += 1
     if iter and iter % 100 == 0:
         print(iter)

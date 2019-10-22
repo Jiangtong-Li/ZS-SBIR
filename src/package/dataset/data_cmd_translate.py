@@ -21,6 +21,7 @@ class CMDTrans_data(torchDataset):
     def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, 
                  raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False):
         super(CMDTrans_data, self).__init__()
+        self.excluded_data = ['./data/256x256/sketch/tx_000100000000/airplane/n02691156_359-5.png', './data/256x256/sketch/tx_000100000000/alarm_clock/n02694662_3449-5.png']
         self.cvae = cvae
         self.cut_part = cut_part
         self.paired = paired
@@ -107,6 +108,9 @@ class CMDTrans_data(torchDataset):
             h5file = h5py.File(self.preprocess_data, 'r')
         else:
             h5file = h5py.File(self.raw_data, 'r')
+        # there are two sketch data points that are not included in origin paper's feature
+        if path in self.excluded_data:
+            path = random.choice(self.class2path_sketch[self.path2class_sketch[path]])
         data = h5file[path][...]
         return data
 

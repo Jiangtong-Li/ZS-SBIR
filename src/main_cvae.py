@@ -87,6 +87,8 @@ def train(args):
         if patience <= 0:
             break
         for sketch_batch, image_p_batch, _image_n_batch, _semantics_batch in dataloader_train:
+            sketch_batch = sketch_batch.float()
+            image_p_batch = image_p_batch.float()
             if global_step % args.print_every == 0 % args.print_every and global_step and batch_acm % args.cum_num == 0:
                 logger.info('*** Iter {} ***'.format(global_step))
                 logger.info('        Loss/KL {:.3}'.format(loss_kl_acm/args.print_every/args.cum_num))
@@ -112,6 +114,7 @@ def train(args):
                 image_label = list()
                 image_feature = list()
                 for image, label in data.load_test_images(batch_size=args.batch_size):
+                    image = image.float()
                     if args.gpu_id != -1:
                         image = image.cuda(args.gpu_id)
                     image_label += label
@@ -122,6 +125,7 @@ def train(args):
                 sketch_label = list()
                 sketch_feature = list()
                 for sketch, label in data.load_test_sketch(batch_size=args.batch_size):
+                    sketch = sketch.float()
                     if args.gpu_id != -1:
                         sketch = sketch.cuda(args.gpu_id)
                     sketch_label += label

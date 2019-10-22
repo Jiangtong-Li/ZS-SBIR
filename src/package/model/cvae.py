@@ -11,8 +11,8 @@ class Variational_Sampler(nn.Module):
     def __init__(self, hidden_size):
         super(Variational_Sampler, self).__init__()
         self.hidden_size = hidden_size
-        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
-        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.Tanh())
+        self.mean_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
+        self.logvar_encoder = nn.Sequential(nn.Linear(hidden_size, hidden_size))
 
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5*logvar)

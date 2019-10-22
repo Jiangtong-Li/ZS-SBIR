@@ -5,7 +5,7 @@ python ./src/main_cvae.py  --sketch_dir ./data/256x256/sketch/tx_000100000000 \
                                --packed_pkl_zs ./data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
                                --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024.h5py \
-                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568.h5py \
+                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_4096_raw.h5py \
                                --log_file ./log/cvae-card2.log \
                                --shuffle \
                                --sample_times 1 \

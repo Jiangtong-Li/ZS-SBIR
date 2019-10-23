@@ -1,6 +1,6 @@
 # Result of models
 
-## SaN
+## SaN:
 
 1. Unpaired + 256D:
 
@@ -14,7 +14,8 @@
 
     mAP@200 - 5.1%
 
-## CMT(Cross-model translation)
+
+## CMT(Cross-model transfer):
 
 
 1. Paired + 500D:
@@ -48,6 +49,21 @@
     mAP@200 - 27.7%
 
 5. Paired + 4096D + finetune:
+
+    P@200 - %
+
+    mAP@200 - %
+
+
+## DSH:
+
+1. Paired:
+
+    P@200 - %
+
+    mAP@200 - %
+
+2. Unpaired:
 
     P@200 - %
 

@@ -67,3 +67,33 @@
     P@200 - %
 
     mAP@200 - %
+
+
+## 3D-Shape:
+
+1. Paired + 4096D + no-finetune:
+
+    P@200 - %
+
+    mAP@200 - %
+
+2. Unpaired + 4096D + no-finetune:
+
+    P@200 - %
+
+    mAP@200 - %
+
+
+## DeViSE:
+
+1. Paired + 4096D + no-finetune:
+
+    P@200 - %
+
+    mAP@200 - %
+
+2. Unpaired + 4096D + no-finetune:
+
+    P@200 - %
+
+    mAP@200 - %

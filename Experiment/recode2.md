@@ -17,7 +17,6 @@
 
 ## CMT(Cross-model transfer):
 
-
 1. Paired + 500D:
 
     P@200 - 5.5%
@@ -26,9 +25,9 @@
 
 2. Unpaired + 500D:
 
-    P@200 - %
+    P@200 - 5.8%
 
-    mAP@200 - %
+    mAP@200 - 0.8%
 
 3. Paired + 4096D + no-finetune:
 
@@ -38,9 +37,9 @@
 
 3. Unpaired + 4096D + no-finetune:
 
-    P@200 - %
+    P@200 - 23.5%
 
-    mAP@200 - %
+    mAP@200 - 11.5%
 
 4. Unpaired + 4096D + finetune:
 
@@ -50,9 +49,9 @@
 
 5. Paired + 4096D + finetune:
 
-    P@200 - %
+    P@200 - 40.7%
 
-    mAP@200 - %
+    mAP@200 - 28.9%
 
 
 ## DSH:

@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 from torch.utils.tensorboard import SummaryWriter
 
-from package.model.cvae import CVAE
+from package.model.regression import Regressor
 from package.loss.regularization import _Regularization
 from package.dataset.data_cmd_translate import CMDTrans_data
 from package.args.cvae_args import parse_config
@@ -38,7 +38,7 @@ def train(args):
     logger.info('Loading the data ...')
     data = CMDTrans_data(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, 
                          packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, 
-                         cvae=True, paired=True, cut_part=False)
+                         cvae=True, paired=False, cut_part=False)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, \
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -48,10 +48,9 @@ def train(args):
     logger.info('Testing image size: {}'.format(len(data.path2class_image_test.keys())))
 
     logger.info('Building the model ...')
-    model = CVAE(args.raw_size, args.hidden_size, dropout_prob=args.dropout, logger=logger)
+    model = Regressor(args.raw_size, args.hidden_size, dropout_prob=args.dropout, logger=logger)
     logger.info('Building the optimizer ...')
     optimizer = Adam(params=model.parameters(), lr=args.lr, betas=(0.5, 0.999))
-    #optimizer = SGD(params=model.parameters(), lr=1, momentum=0.9)
     l1_regularization = _Regularization(model, args.l1_weight, p=1, logger=logger)
     l2_regularization = _Regularization(model, args.l2_weight, p=2, logger=logger)
 
@@ -64,16 +63,11 @@ def train(args):
         model.cuda(args.gpu_id)
     optimizer.zero_grad()
 
-    # three design loss and two reg loss
-    loss_kl_acm = 0.
-    loss_img_acm = 0.
-    loss_ske_acm = 0.
+    loss_tri_acm = 0.
     loss_l1_acm = 0.
     loss_l2_acm = 0.
-    # loading batch and optimization step
     batch_acm = 0
     global_step = 0
-    # best recoder
     best_precision = 0.
     best_iter = 0
     patience = args.patience
@@ -82,23 +76,19 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',1.0), ('image', 1.0), ('sketch', 10.0)])
     while True:
         if patience <= 0:
             break
-        for sketch_batch, image_p_batch, _image_n_batch, _semantics_batch in dataloader_train:
+        for sketch_batch, image_p_batch, image_n_batch, _semantics_batch in dataloader_train:
             sketch_batch = sketch_batch.float()
             image_p_batch = image_p_batch.float()
+            image_n_batch = image_n_batch.float()
             if global_step % args.print_every == 0 % args.print_every and global_step and batch_acm % args.cum_num == 0:
                 logger.info('*** Iter {} ***'.format(global_step))
-                logger.info('        Loss/KL {:.3}'.format(loss_kl_acm/args.print_every/args.cum_num))
-                logger.info('        Loss/Image {:.3}'.format(loss_img_acm/args.print_every/args.cum_num))
-                logger.info('        Loss/Sketch {:.3}'.format(loss_ske_acm/args.print_every/args.cum_num))
+                logger.info('        Loss/Triplet {:.3}'.format(loss_tri_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/L1 {:.3}'.format(loss_l1_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/L2 {:.3}'.format(loss_l2_acm/args.print_every/args.cum_num))
-                loss_kl_acm = 0.
-                loss_img_acm = 0.
-                loss_ske_acm = 0.
+                loss_tri_acm = 0.
                 loss_l1_acm = 0.
                 loss_l2_acm = 0.
 
@@ -118,7 +108,7 @@ def train(args):
                     if args.gpu_id != -1:
                         image = image.cuda(args.gpu_id)
                     image_label += label
-                    tmp_feature = image.cpu().detach().numpy()
+                    tmp_feature = model.inference_image(image).cpu().detach().numpy()
                     image_feature.append(tmp_feature)
                 image_feature = np.vstack(image_feature)
 
@@ -129,7 +119,7 @@ def train(args):
                     if args.gpu_id != -1:
                         sketch = sketch.cuda(args.gpu_id)
                     sketch_label += label
-                    tmp_feature = model.inference_generation(sketch).cpu().detach().numpy()
+                    tmp_feature = model.inference_sketch(sketch).cpu().detach().numpy()
                     sketch_feature.append(tmp_feature)
                 sketch_feature = np.vstack(sketch_feature)
 
@@ -162,31 +152,24 @@ def train(args):
             if args.gpu_id != -1:
                 sketch_batch = sketch_batch.cuda(args.gpu_id)
                 image_p_batch = image_p_batch.cuda(args.gpu_id)
+                image_n_batch = image_n_batch.cuda(args.gpu_id)
 
-            loss = model(sketch_batch, image_p_batch)
+            loss = model(sketch_batch, image_p_batch, image_n_batch)
 
             loss_l1 = l1_regularization()
             loss_l2 = l2_regularization()
-            loss_kl = loss['kl'].item()
-            loss_img = loss['image'].item()
-            loss_ske = loss['sketch'].item()
+            loss_tri = loss.item()
 
             loss_l1_acm += (loss_l1.item() / args.l1_weight)
             loss_l2_acm += (loss_l2.item() / args.l2_weight)
-            loss_kl_acm += loss_kl
-            loss_img_acm += loss_img
-            loss_ske_acm += loss_ske
+            loss_tri_acm += loss_tri
 
-            writer.add_scalar('Loss/KL', loss_kl, global_step)
-            writer.add_scalar('Loss/Image', loss_img, global_step)
-            writer.add_scalar('Loss/Sketch', loss_ske, global_step)
+            writer.add_scalar('Loss/Triplet', loss_tri, global_step)
             writer.add_scalar('Loss/Reg_l1', (loss_l1.item() / args.l1_weight), global_step)
             writer.add_scalar('Loss/Reg_l2', (loss_l2.item() / args.l2_weight), global_step)
 
             loss_ = 0
-            loss_ += loss['image']*loss_weight['image']
-            loss_ += loss['sketch']*loss_weight['sketch']
-            loss_ += loss['kl']*loss_weight['kl']
+            loss_ += loss
             loss_.backward()
 
             if batch_acm % args.cum_num == 0:

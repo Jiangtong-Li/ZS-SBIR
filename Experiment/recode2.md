@@ -88,12 +88,18 @@
 
 1. Paired + 4096D + no-finetune:
 
-    P@200 - %
+    P@200 - 23.9%
 
-    mAP@200 - %
+    mAP@200 - 12.8%
 
 2. Unpaired + 4096D + no-finetune:
 
-    P@200 - %
+    P@200 - 25.2%
 
-    mAP@200 - %
+    mAP@200 - 14.1%
+
+3. Unpaired + 4096D + finetune:
+
+    P@200 - 24.4%
+
+    mAP@200 - 21.8%

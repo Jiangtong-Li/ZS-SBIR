@@ -73,15 +73,15 @@
 
 1. Paired + 4096D + no-finetune:
 
-    P@200 - %
+    P@200 - 6.1%
 
-    mAP@200 - %
+    mAP@200 - 1.0%
 
 2. Unpaired + 4096D + no-finetune:
 
-    P@200 - %
+    P@200 - 7.0%
 
-    mAP@200 - %
+    mAP@200 - 1.8%
 
 
 ## DeViSE:
@@ -100,6 +100,6 @@
 
 3. Unpaired + 4096D + finetune:
 
-    P@200 - 24.4%
+    P@200 - 34.1%
 
-    mAP@200 - 21.8%
+    mAP@200 - 21.7%

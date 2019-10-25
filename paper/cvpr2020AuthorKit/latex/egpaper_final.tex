@@ -27,7 +27,7 @@
 %%%%%%%%% TITLE
 \title{Zero-Shot Sketch-Based Image Retrieval with Cross-modal Translation}
 
-\author{Yi Xu$^{\dag}$ \thanks{$^{\dag}$ Corresponding author. If you have any question, you can contact with \tt{xuyi\_2019@sjtu.edu.cn}},  Yi'an Li, Jiangtong Li, Siqi Liu, Jiarui Jin  \\
+\author{Jiangtong Li, Yi Xu$^{\dag}$ \thanks{$^{\dag}$ Corresponding author. If you have any question, you can contact with \tt{xuyi\_2019@sjtu.edu.cn}},  Yi'an Li, Siqi Liu, Jiarui Jin  \\
 Department of Computer Science and Engineering, Shanghai Jiao Tong University \\
 }
 % For a paper whose authors are all at the same institution,
@@ -45,10 +45,10 @@ Department of Computer Science and Engineering, Shanghai Jiao Tong University \\
 \begin{abstract}
    Zero-shot sketch-based image retrieval (ZS-SBIR) is a task of cross-domain image retrieval from a natural image gallery with free-hand sketch under a zero-shot scenario. 
    Previous works mostly focus on a generative approach that takes a highly abstract and sparse sketch as input and then synthesizes the corresponding natural image. 
-   However, fusing the sketch features and image features together during encoding weaken the generative capability of the decoder, besides, the generative models prone to use paired data to during training, which also waste a large amount of unpaired data and hence achieve unsatisfactory retrieval performance. 
+   However, fusing the sketch features and image features together during encoding weakens the generative capability of the decoder, besides, the generative models prone to use paired data to during training, which also waste a large amount of unpaired data and hence achieve unsatisfactory retrieval performance. 
    In this paper, we propose a novel cross-modal domain translation network to make use of the large amount of unpaired data and strengthen the decoder. 
-   Specifically, we devise an asymmetrical translation network, which divide the hidden space into structure space and appearance space. To compensate uncertain appearance information in structure space, we also add an extra information compensation module before image decoding.
-   In order to make use of large amount unpaired data, we add a ranking loss in structure space and design a new retrieval criterion to take advantage from both regressive model and generative model.
+   Specifically, we devise an asymmetrical translation network, which divides the hidden space into structure space and appearance space. To compensate uncertain appearance information in structure space, we also add an extra information compensation module before image decoding.
+   In order to make use of the large amount unpaired data, we adopt a ranking loss in structure space and design a new retrieval criterion to take advantage from both regressive model and generative model.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT

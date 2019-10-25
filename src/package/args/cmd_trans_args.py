@@ -22,6 +22,8 @@ def parse_config():
     parser.add_argument('--seman_dist', type=str, default='cosine')
     parser.add_argument('--triplet_dist', type=str, default='l2')
     parser.add_argument('--margin', type=float, default=10.0)
+    parser.add_argument('--margin1', type=float, default=1.0)
+    parser.add_argument('--margin2', type=float, default=10.0)
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--num_worker', type=int, default=8)

@@ -196,73 +196,31 @@
 
 ## Cross-Modal Domain Translation
 
-1. Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (**this night-1**)
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch)
 
-2. Siamese Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch)
+    Step: 14000(bs 64)
 
-3. Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch)
+    Loss: 13.6(Rank); 1.17(image)
 
-    Step: 10500(bs 64)
+    P@200: 30.4%
 
-    Loss: 15.2(Rank); 1.21(image)
-
-    P@200: 29.8%
-
-    mAP@200: 18.4%
-
-    Lambda: 0.5
-
-4. Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch)
-
-    Step: 12500(bs 64)
-
-    Loss: 14.0(Rank); 1.20(image)
-
-    P@200: 29.9%
-
-    mAP@200: 18.3%
-
-    Lambda: 0.4
-
-5. Ranking Loss + 1024 + paired decode(s) + 5568(image) + 5568(sketch)
-
-    Step: 12500(bs 64)
-
-    Loss: 13.9(Rank); 0.82(image)
-
-    P@200: 38.3%
-
-    mAP@200: 26.7%
+    mAP@200: 19.0%
 
     Lambda: 0.3
 
-6. Ranking Loss + 1024 + paired decode(s+e) + 5568(image) + 5568(sketch)
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (no drop)
 
     Step: 8500(bs 64)
 
-    Loss: 15.3(Rank); 0.87(image)
+    Loss: 12.2(Rank); 1.11(image)
 
-    P@200: 38.2%
+    P@200: 33.7%
 
-    mAP@200: 26.5%
+    mAP@200: 21.2%
 
-    Lambda: 0.3
+    Lambda: Com
 
-7. Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch) (no drop)
-
-    Step: 11500(bs 64)
-
-    Loss: 11.4(Rank); 1.1(image)
-
-    P@200: 32.9%
-
-    mAP@200: 22.0%
-
-    Lambda: 0.4
-
-8. Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (no drop) (**this night-2**)
-
-9. Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (margin1=1)
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (margin1=1)
 
     Step: 8500(bs 64)
 
@@ -274,6 +232,196 @@
 
     Lambda: 0.4
 
-10. Ranking Loss + 2048 + paired decode(s) + 5568(image) + 5568(sketch) (**this night-1**)
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (nodrop; margin1=1)
 
-11. Ranking Loss + 2048 + paired decode(s+e) + 5568(image) + 5568(sketch) (**this night-2**)
+    Step: 20000(bs 64)
+
+    Loss: 9.2(Rank); 1.0(image)
+
+    P@200: 34.2%
+
+    mAP@200: 23.4%
+
+    Lambda: 0.5
+
+* Siamese Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch)
+
+* Ranking Loss + 1024 + paired decode(s) + 5568(image) + 5568(sketch)
+
+    Step: 12500(bs 64)
+
+    Loss: 13.9(Rank); 0.82(image)
+
+    P@200: 38.3%
+
+    mAP@200: 26.7%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(s) + 5568(image) + 5568(sketch) (no drop)
+
+    Step: 11500(bs 64)
+
+    Loss: 11.3(Rank); 0.83(image)
+
+    P@200: 39.2%
+
+    mAP@200: 27.3%
+
+    Lambda: 0.4
+
+* Ranking Loss + 1024 + paired decode(s) + 5568(image) + 5568(sketch) (m1)
+
+    Step: 11500(bs 64)
+
+    Loss: 12.4(Rank); 0.71(image)
+
+    P@200: 38.2%
+
+    mAP@200: 26.8%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(s) + 5568(image) + 5568(sketch) (no drop; m1)
+
+    Step: 17000(bs 64)
+
+    Loss: 9.7(Rank); 0.75(image)
+
+    P@200: 39.1%
+
+    mAP@200: 27.1%
+
+    Lambda: 0.4
+
+* Ranking Loss + 1024 + paired decode(s+e) + 5568(image) + 5568(sketch)
+
+    Step: 8500(bs 64)
+
+    Loss: 15.3(Rank); 0.87(image)
+
+    P@200: 38.2%
+
+    mAP@200: 26.5%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(s+e) + 5568(image) + 5568(sketch) (no drop)
+
+    Step: 14000(bs 64)
+
+    Loss: 10.2(Rank); 0.78(image)
+
+    P@200: 38.4%
+
+    mAP@200: 27.2%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(s+e) + 5568(image) + 5568(sketch) (m1)
+
+    Step: 11000(bs 64)
+
+    Loss: 14.1(Rank); 0.82(image)
+
+    P@200: 38.6%
+
+    mAP@200: 26.7%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(s+e) + 5568(image) + 5568(sketch) (no drop; m1)
+
+    Step: 17000(bs 64)
+
+    Loss: 9.1(Rank); 0.76(image)
+
+    P@200: 38.6%
+
+    mAP@200: 27.2%
+
+    Lambda: 0.3
+
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (deeper, dropout0.3 ***Since there are two dropout layer, the dropout number is equal to 0.51***)
+
+    Step: 31500(bs 64)
+
+    Loss: 8.7(Rank); 1.06(image)
+
+    P@200: 30.4%
+
+    mAP@200: 19.4%
+
+    Lambda: 0.5
+
+* Ranking Loss + 1024 + paired decode(e) + 5568(image) + 5568(sketch) (deeper, dropout0.16 ***Since there are two dropout layer, the dropout number is equal to 0.3***)
+
+    Step: (bs 64)
+
+    Loss: (Rank); (image)
+
+    P@200: %
+
+    mAP@200: %
+
+    Lambda: 0.
+
+* Ranking Loss + 2048 + paired decode(s) + 5568(image) + 5568(sketch)
+
+    Step: 10500(bs 64)
+
+    Loss: 14.6(Rank); 0.85(image)
+
+    P@200: 37.6%
+
+    mAP@200: 25.9%
+
+    Lambda: 0.3
+
+* Ranking Loss + 2048 + paired decode(s+e) + 5568(image) + 5568(sketch)
+
+    Step: 24000(bs 64)
+
+    Loss: 12.3(Rank); 0.75(image)
+
+    P@200: 38%
+
+    mAP@200: 26.8%
+
+    Lambda: 0.3
+
+* Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch)
+
+    Step: 10500(bs 64)
+
+    Loss: 15.2(Rank); 1.21(image)
+
+    P@200: 29.8%
+
+    mAP@200: 18.4%
+
+    Lambda: 0.5
+
+* Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch)
+
+    Step: 12500(bs 64)
+
+    Loss: 14.0(Rank); 1.20(image)
+
+    P@200: 29.9%
+
+    mAP@200: 18.3%
+
+    Lambda: 0.4
+
+* Ranking Loss + 2048 + paired decode(e) + 5568(image) + 5568(sketch) (no drop)
+
+    Step: 11500(bs 64)
+
+    Loss: 11.4(Rank); 1.1(image)
+
+    P@200: 32.9%
+
+    mAP@200: 22.0%
+
+    Lambda: 0.4

@@ -86,7 +86,7 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',1.0), ('triplet', 0.7), ('orthogonality', 0.01), ('image', 1.0), ('sketch', 10.0)])
+    loss_weight = dict([('kl',1.0), ('triplet', 1.0), ('orthogonality', 0.01), ('image', 1.0), ('sketch', 10.0)])
     while True:
         if patience <= 0:
             break

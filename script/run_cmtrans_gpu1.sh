@@ -10,7 +10,7 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --sample_times 1 \
                                --pca_size 1024 \
                                --raw_size 5568 \
-                               --hidden_size 2048 \
+                               --hidden_size 1024 \
                                --semantics_size 300 \
                                --fix_embedding \
                                --seman_dist l2 \
@@ -20,13 +20,13 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --patience 20 \
                                --batch_size 64 \
                                --num_worker 4 \
-                               --dropout 0.3 \
+                               --dropout 0.16 \
                                --warmup_steps 1000 \
                                --lr 2e-4 \
                                --print_every 100 \
                                --save_every 500 \
-                               --save_dir ./model/cmdtrans_ranking_2048_dec_s+e_5568_5568/ \
-                               --log_file ./log/cmdtrans_ranking_2048_dec_s+e_5568_5568.log \
+                               --save_dir ./model/cmdtrans_ranking_1024_dec_e_5568_5568_deep_revised_drop/ \
+                               --log_file ./log/cmdtrans_ranking_1024_dec_e_5568_5568_deep_revised_drop.log \
                                --gpu_id 1 \
                                --cum_num 1 \
                                --zs

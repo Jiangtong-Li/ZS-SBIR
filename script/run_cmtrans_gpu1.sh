@@ -5,28 +5,28 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --packed_pkl_zs ./data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
                                --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024.h5py \
-                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568_updated.h5py \
                                --shuffle \
                                --sample_times 1 \
                                --pca_size 1024 \
-                               --raw_size 5568 \
                                --hidden_size 1024 \
                                --semantics_size 300 \
                                --fix_embedding \
                                --seman_dist l2 \
                                --triplet_dist l2 \
-                               --margin1 0.0 \
+                               --margin1 4.0 \
                                --margin2 10.0 \
                                --patience 20 \
                                --batch_size 64 \
-                               --num_worker 4 \
-                               --dropout 0.16 \
+                               --num_worker 0 \
+                               --dropout 0.0 \
                                --warmup_steps 1000 \
                                --lr 2e-4 \
                                --print_every 100 \
                                --save_every 500 \
-                               --save_dir ./model/cmdtrans_ranking_1024_dec_e_5568_5568_deep_revised_drop/ \
-                               --log_file ./log/cmdtrans_ranking_1024_dec_e_5568_5568_deep_revised_drop.log \
-                               --gpu_id 1 \
+                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024_updated.h5py \
+                               --raw_size 1024 \
+                               --save_dir ./model/cmdtrans_ranking_1024_dec_es_1024_1024_00_4_noorth/ \
+                               --log_file ./log/cmdtrans_ranking_1024_dec_es_1024_1024_00_4_noorth.log \
+                               --gpu_id 0 \
                                --cum_num 1 \
                                --zs

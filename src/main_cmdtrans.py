@@ -219,7 +219,7 @@ def train(args):
             loss_ += loss['sketch']*loss_weight['sketch']
             loss_ += loss['triplet']*loss_weight['triplet']
             loss_ += loss['kl']*loss_weight['kl']
-            loss_ += loss['orthogonality']*loss_weight['orthogonality']
+            #loss_ += loss['orthogonality']*loss_weight['orthogonality']
             loss_.backward()
 
             if batch_acm % args.cum_num == 0:

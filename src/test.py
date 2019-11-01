@@ -32,10 +32,10 @@ data = CMDTrans_data('./data/256x256/sketch/tx_000100000000',
                      './data/GoogleNews-vectors-negative300.bin', 
                      './data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl', 
                      './data/preprocessed/cm_trans_sketch_all_unpair/CNN_feature_1024.h5py', 
-                     './data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568.h5py',
-                     cvae=True, sample_time=1, paired=False)
+                     './data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_4096_updated.h5py',
+                     sample_time=1, cvae=True, paired=True, cut_part=False, ranking=True)
 
-dataLoader = DataLoader(dataset=data, batch_size=10000, num_workers=8, shuffle=True)
+dataLoader = DataLoader(dataset=data, batch_size=64, num_workers=0, shuffle=True)
 
 # model = ZSIM(args.hidden_size, args.hashing_bit, args.semantics_size, data.pretrain_embedding.float(), 
 #              adj_scaler=args.adj_scaler, dropout=args.dropout, fix_cnn=args.fix_cnn, 

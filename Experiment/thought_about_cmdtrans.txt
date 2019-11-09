@@ -1,0 +1,42 @@
+* 下文中所有模型的效果描述全部基于Precision@200，同时为百分比结果。
+
+从上周五开完会之后，我们将主模型设计这部分分为两块来进行。
+第一部分是搜索相关使用外部信息的方法，看看有没有什么更好的将semantics的信息融合进来的方法。
+第二部分是不利用任何外部信息，仅仅利用该数据集进行直接建模。
+
+关于第一部分，我们阅读了几篇将外部信息与模型建模相结合的模型，发现大多数相关模型的建模方式都与要加入的信息的格式息息相关，
+考虑到我们希望加入的是semantic的word embedding的信息，我们并没有想到比较合理的一个方案。（不过如果不仅仅将信息局限于
+semantic的word embedding的信息的话，我是想着可以预训练一个visual+image结合的pretrain模型，这和牛老师之前提过的
+visually grounded language representation的思路比较接近，但是由于时间的限制，所以这种方式可以后续作为大规模任务
+考虑）。
+
+关于第二部分，我们先复现了两个基本的模型，第一个是CVAE，第二个是Siamese(VGG-16的参数不变，在fix参数的后面加了两层MLP)。
+与此同时，我们开始利用paired data和unpaired data对这两个模型进行分别的实验，其中，在实验时，我们发现对于Siamese这种
+基于映射空间距离操作(这里应该重新起一个名字)的模型，对于unpaired data的效果要远远好于paired data(28.4 vs 20.6)，但是对于
+CVAE这种基于生成image feature的模型，paired data的效果要远远好于unpaired data(33.8 vs 29.7)。基于这个现象，我们重新
+更改了主模型的设计，首先是将Semantic Preservation的部分去掉，其次是将正例数据分为了paired data和unpaired data，并且在
+生成的部分，我们将只利用paired data进行训练，但是在Siamese(即strucutre feature空间的距离学习)部分，我们将原本的Sim/Dissim 
+loss改为了新的Ranking loss，其中ranking的准则为：
+0 <= dist(image_pair, sket) <= dist(image_unpair, sket)-margin1 <= dist(image_n, sket)-margin2
+在利用新的模型进行联合训练的时候，我们发现仅仅Generation部分进行retrieval和仅仅使用Structure Space进行retrieval的效果都要好于
+单独使用他们进行训练的效果(36.6 vs 33.8 for generation and 31.2 vs 28.4 for siamese)。同时在利用我们的两个距离联合的准则进行
+retrieval时，我们发现retrieval的效果有了很大的增长，从双边分别为36.6 - 31.2直接提升到了39.5。
+
+目前来看，我们提出的模型应该时数据增强和模型创新的结合。因此，我不太确定的地方主要为:
+1. 我们的故事应该主要从cross-modal domain translation来讲还是应该从数据增强的点来讲？在我看起来，对效果影响最大的应该是数据增强的部分。
+2. TU-Berlin数据集中不存在paired data，那在这个数据集上我们是否可以只是简单的跑一个实验，但是不做过多的分析，而对模型的分析就主要集中在
+Sketchy数据集上？
+3. 由于在structure空间这部分我们使用了unpair和unpair data来共同进行ranking loss，但是在generation部分我们并没有使用unpaired data
+所以后面考虑将unpaired data也可以使用到这一部分数据，我将根据实验结果对模型进行实施调整。
+4. 对不同模型的不同容忍度的分析。
+
+关于两种模型对paired和unpaired data的不同兼容性的思考
+由于生成式模型是要从sketch domain映射到image domain，因此，对于pose不同的sketch-image组，这种映射的难度较大，学习时loss无法下降到
+较低的水平，因此模型对unpaired的兼容性较差；而siamese这种模型本质上是在将两个class的模型映射到相同空间中进行匹配，所以不同pose的模型反而
+有利于模型的robust。换一种说法，generation based model本质上是在做A2B translation，而siamese like model本质上在做A2C B2C的映射，
+这使得gen based model只能对sketch空间进行操作，而siamese like model可以对sketch和image的空间进行共同操作。所以siamese like model
+对不同pose的容忍度较高，而gen based model对不同pose容忍度较低。(最后这部分表述的比较不清晰，所以第四点明天可以重点讨论。)
+
+
+ABS
+我们将图片的特征解藕为结构特征和外观特征，使得在公共子空间内匹配时的噪声更小，同时使得，解码器可以更好的使用sktech的信息。

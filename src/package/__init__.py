@@ -1,45 +1,41 @@
 import numpy as np
 from scipy.spatial.distance import cdist
+import torch
+import torch.nn as nn
 
-def cal_matrics(image_f1, image_f2, image_l, sketch_f1, sketch_f2, sketch_l, lambda_i = 0.5, n=200):
+def cosine_distance(x1, x2=None, eps=1e-8):
+    x2 = x1 if x2 is None else x2
+    w1 = x1.norm(p=2, dim=1, keepdim=True)
+    w2 = w1 if x2 is x1 else x2.norm(p=2, dim=1, keepdim=True)
+    return 1 - torch.mm(x1, x2.t()) / (w1 * w2.t()).clamp(min=eps)
 
-    dists_cosine1 = cdist(image_f1, sketch_f1, 'cosine')
-    dists_cosine2 = cdist(image_f2, sketch_f2, 'cosine')
-    precision_b = 0
-    mAP_b = 0.
-    lambda_b = 0.
-    for lambda_i in [0., 0.2, 0.4, 0.6, 0.8, 1.]:
+def cal_matrics(dists_cosine1, dists_cosine2, image_l, sketch_l, n=200):
+    precision_list = list()
+    mAP_list = list()
+    lambda_list = list()
+    for lambda_i in [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
         dists = lambda_i*dists_cosine1 + (1-lambda_i)*dists_cosine2
         rank = np.argsort(dists, 0)
         ranksn = rank[:n, :].T
         classesn = np.array([[image_l[i] == sketch_l[r] for i in ranksn[r]] for r in range(len(ranksn))]) # ske_size*n
         precision = np.mean(classesn)
-        # Cal MAP
-        """
-        Test case: np.array([[1,0,1,0,0,1,0,0,1,1],[0,1,0,0,1,0,1,0,0,0]])
-        Answer: 0.53
-        """
         mAP = np.mean(np.sum(classesn*np.cumsum(classesn, axis=1)/np.cumsum(np.ones(classesn.shape), axis=1), axis=1)/n)
-        if precision > precision_b:
-            precision_b = precision
-            lambda_b = lambda_i
-        if mAP > mAP_b:
-            mAP_b = mAP
-    return precision_b, mAP_b, lambda_b
+        precision_list.append(precision)
+        mAP_list.append(mAP)
+        lambda_list.append(lambda_i)
+    min_dists = np.minimum(dists_cosine1, dists_cosine2)
+    rank = np.argsort(min_dists, 0)
+    ranksn = rank[:n, :].T
+    classesn = np.array([[image_l[i] == sketch_l[r] for i in ranksn[r]] for r in range(len(ranksn))]) # ske_size*n
+    precision_c = np.mean(classesn)
+    mAP_c = np.mean(np.sum(classesn*np.cumsum(classesn, axis=1)/np.cumsum(np.ones(classesn.shape), axis=1), axis=1)/n)
+    return precision_list, mAP_list, lambda_list, precision_c, mAP_c
 
 def cal_matrics_single(image_f, image_l, sketch_f, sketch_l, n=200):
-
     dists = cdist(image_f, sketch_f, 'cosine')
-    precision_b = 0
-    mAP_b = 0.
     rank = np.argsort(dists, 0)
     ranksn = rank[:n, :].T
     classesn = np.array([[image_l[i] == sketch_l[r] for i in ranksn[r]] for r in range(len(ranksn))]) # ske_size*n
     precision = np.mean(classesn)
-    # Cal MAP
-    """
-    Test case: np.array([[1,0,1,0,0,1,0,0,1,1],[0,1,0,0,1,0,1,0,0,0]])
-    Answer: 0.53
-    """
     mAP = np.mean(np.sum(classesn*np.cumsum(classesn, axis=1)/np.cumsum(np.ones(classesn.shape), axis=1), axis=1)/n)
     return precision, mAP

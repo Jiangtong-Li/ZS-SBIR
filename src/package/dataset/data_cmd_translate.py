@@ -6,11 +6,13 @@ import pickle
 import gensim
 
 import cv2
+from PIL import Image, ImageOps
 import h5py
 import numpy as np
 import torch
 from torch.utils.data import Dataset as torchDataset
 from torchvision.transforms import Normalize, ToTensor
+from torchvision import transforms
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
@@ -19,9 +21,10 @@ from package.model.vgg import vgg16
 
 class CMDTrans_data(torchDataset):
     def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, 
-                 raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False):
+                 raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False, ranking=False):
         super(CMDTrans_data, self).__init__()
         self.excluded_data = ['./data/256x256/sketch/tx_000100000000/airplane/n02691156_359-5.png', './data/256x256/sketch/tx_000100000000/alarm_clock/n02694662_3449-5.png']
+        self.ranking = ranking
         self.cvae = cvae
         self.cut_part = cut_part
         self.paired = paired
@@ -54,30 +57,62 @@ class CMDTrans_data(torchDataset):
         random.shuffle(self.id2path)
 
     def __getitem__(self, index):
-        if not self.cvae:
-            sketch = self.load_feature_use(self.id2path[index], 'sketch')
+        if self.ranking:
+            sketch = self.load_feature_use(self.id2path[index], 'all')
+            cla = self.path2class_sketch[self.id2path[index]]
+            image_pair = list()
+            image_unpair = list()
+            image_n = list()
+            for _ in range(self.sample_time):
+                _image_pair, _image_unpair = self.pair_unpair(self.id2path[index])
+                _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
+                image_pair.append(_image_pair)
+                image_unpair.append(_image_unpair)
+                image_n.append(_image_n)
+            image_pair = np.mean(np.stack(image_pair, axis=1), axis=1)
+            image_unpair = np.mean(np.stack(image_unpair, axis=1), axis=1)
+            image_n = np.mean(np.stack(image_n, axis=1), axis=1)
+            return sketch, image_pair, image_unpair, image_n
         else:
-            sketch = self.load_feature_use(self.id2path[index], 'image')
-        if self.cut_part:
-            sketch = sketch[-4096:]
-        cla = self.path2class_sketch[self.id2path[index]]
-        image_p = list()
-        image_n = list()
-        for _ in range(self.sample_time):
-            _image_p, _path_p = self.pair_similar(self.id2path[index])
+            if not self.cvae:
+                sketch = self.load_feature_use(self.id2path[index], 'compressed')
+            else:
+                sketch = self.load_feature_use(self.id2path[index], 'all')
             if self.cut_part:
-                _image_p = _image_p[-4096:]
-            _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
-            image_p.append(_image_p)
-            image_n.append(_image_n)
-        image_p = np.mean(np.stack(image_p, axis=1), axis=1)
-        image_n = np.mean(np.stack(image_n, axis=1), axis=1)
-        semantics = np.zeros((1))
-        semantics[0] = self.class2id[cla]
-        return sketch, image_p, image_n, semantics
+                sketch = sketch[-4096:]
+            cla = self.path2class_sketch[self.id2path[index]]
+            image_p = list()
+            image_n = list()
+            for _ in range(self.sample_time):
+                _image_p, _path_p = self.pair_similar(self.id2path[index])
+                _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
+                if self.cut_part:
+                    _image_p = _image_p[-4096:]
+                    _image_n = _image_n[-4096:]
+                image_p.append(_image_p)
+                image_n.append(_image_n)
+            image_p = np.mean(np.stack(image_p, axis=1), axis=1)
+            image_n = np.mean(np.stack(image_n, axis=1), axis=1)
+            semantics = np.zeros((1))
+            semantics[0] = self.class2id[cla]
+            return sketch, image_p, image_n, semantics
 
     def __len__(self):
         return len(self.id2path)
+    
+    def pair_unpair(self, sk_path):
+        path_pair = None
+        path_unpair = None
+        cls = self.path2class_sketch[sk_path]
+        path_list = list(self.class2path_image[cls])
+        match_item = sk_path.split('/')[-1].split('-')[0]
+        for item in path_list:
+            if match_item in item:
+                path_pair = item
+        path_unpair = random.choice(path_list)
+        if path_pair is None:
+            path_pair = random.choice(path_list)
+        return self.load_feature_use(path_pair, 'all'), self.load_feature_use(path_unpair, 'all')
 
     def pair_similar(self, sk_path):
         path = None
@@ -92,7 +127,7 @@ class CMDTrans_data(torchDataset):
             path = random.choice(path_list)
         if path is None:
             path = random.choice(path_list)
-        return self.load_feature_use(path, 'image'), path
+        return self.load_feature_use(path, 'all'), path
 
     def pair_dissimilar(self, sk_path):
         cls = self.path2class_sketch[sk_path]
@@ -101,15 +136,16 @@ class CMDTrans_data(torchDataset):
         choice = random.choice(class_list)
         path_list = list(self.class2path_image[choice])
         path = random.choice(path_list)
-        return self.load_feature_use(path, 'image'), path
+        return self.load_feature_use(path, 'all'), path
     
     def load_feature_use(self, path, mode):
-        if mode=='sketch':
+        excluded_data = ['./data/256x256/sketch/tx_000100000000/airplane/n02691156_359-5.png', './data/256x256/sketch/tx_000100000000/alarm_clock/n02694662_3449-5.png']
+        if mode=='compressed':
             h5file = h5py.File(self.preprocess_data, 'r')
         else:
             h5file = h5py.File(self.raw_data, 'r')
         # there are two sketch data points that are not included in origin paper's feature
-        if path in self.excluded_data:
+        if path in excluded_data:
             path = random.choice(self.class2path_sketch[self.path2class_sketch[path]])
         data = h5file[path][...]
         return data
@@ -118,7 +154,7 @@ class CMDTrans_data(torchDataset):
         ims = []
         label = []
         for path in self.path2class_image_test.keys():
-            singal_img = self.load_feature_use(path, 'image')
+            singal_img = self.load_feature_use(path, 'all')
             if self.cut_part:
                 singal_img = singal_img[-4096:]
             ims.append(torch.from_numpy(singal_img))
@@ -134,9 +170,9 @@ class CMDTrans_data(torchDataset):
         label = []
         for path in self.path2class_sketch_test.keys():
             if not self.cvae:
-                sketch = self.load_feature_use(path, 'sketch')
+                sketch = self.load_feature_use(path, 'compressed')
             else:
-                sketch = self.load_feature_use(path, 'image')
+                sketch = self.load_feature_use(path, 'all')
             if self.cut_part:
                 sketch = sketch[-4096:]
             ims.append(torch.from_numpy(sketch))
@@ -151,7 +187,7 @@ class CMDTrans_data(torchDataset):
         ims = []
         label = []
         for path in self.path2class_image.keys():
-            ims.append(self.load_feature_use(path, 'image'))
+            ims.append(self.load_feature_use(path, 'all'))
             label.append(self.path2class_image[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -163,7 +199,7 @@ class CMDTrans_data(torchDataset):
         ims = []
         label = []
         for path in self.path2class_sketch.keys():
-            ims.append(self.load_feature_use(path, 'sketch'))
+            ims.append(self.load_feature_use(path, 'compressed'))
             label.append(self.path2class_sketch[path])
             if len(ims) == batch_size:
                 yield torch.stack(ims), label
@@ -427,3 +463,199 @@ class image2features:
                 _ = f.create_dataset(image_path_list[idx], data=image_feature_np_new[idx])
             for idx in range(len(sketch_path_list)):
                 _ = f.create_dataset(sketch_path_list[idx], data=sketch_feature_np_new[idx])
+    
+    def pca_from_h5(self, target_dim, load_h5_file):
+        # load
+        image_p_file = os.path.join(self.save_dir, 'image_pathes')
+        sketch_p_file = os.path.join(self.save_dir, 'sketch_pathes')
+        with open(image_p_file, 'rb') as f:
+            image_path_list = pickle.load(f)
+        with open(sketch_p_file, 'rb') as f:
+            sketch_path_list = pickle.load(f)
+        image_path = list()
+        image_feature = list()
+        sketch_path = list()
+        sketch_feature = list()
+        with h5py.File(os.path.join(self.save_dir, load_h5_file), 'r') as f:
+            for path in image_path_list:
+                try:
+                    feature = f[path][...]
+                    image_path.append(path)
+                    image_feature.append(feature)
+                except:
+                    pass
+            for path in sketch_path_list:
+                try:
+                    feature = f[path][...]
+                    sketch_path.append(path)
+                    sketch_feature.append(feature)
+                except:
+                    pass
+        assert len(image_feature) == len(image_path)
+        assert len(sketch_feature) == len(sketch_path)
+        print('Loaded data from {}'.format(load_h5_file))
+        print(len(image_path))
+        print(len(sketch_path))
+        image_feature_np = np.stack(image_feature, axis=0)
+        sketch_feature_np = np.stack(sketch_feature, axis=0)
+        pca1 = PCA(n_components=target_dim)
+        image_feature_np_new = pca1.fit_transform(image_feature_np)
+        pca2 = PCA(n_components=target_dim)
+        sketch_feature_np_new = pca2.fit_transform(sketch_feature_np)
+        # Save feature to h5py
+        save_h5_file = os.path.join(self.save_dir, 'CNN_feature_{}_updated.h5py'.format(target_dim))
+        with h5py.File(save_h5_file, 'w') as f:
+            for idx in range(len(image_path)):
+                _ = f.create_dataset(image_path[idx], data=image_feature_np_new[idx])
+            for idx in range(len(sketch_path)):
+                _ = f.create_dataset(sketch_path[idx], data=sketch_feature_np_new[idx])
+
+class VGGNetFeats(nn.Module):
+    def __init__(self, pretrained=True, finetune=True):
+        super(VGGNetFeats, self).__init__()
+        model = models.vgg16(pretrained=pretrained)
+        for param in model.parameters():
+            param.requires_grad = finetune
+        self.features = model.features
+        self.classifier = nn.Sequential(
+            *list(model.classifier.children())[:-1],
+            nn.Linear(4096, 512)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x.view(x.size(0), -1))
+        return x
+class image2features_pcyc:
+    def __init__(self, image_dir, sketch_dir, save_dir, image_model_path, sketch_model_path):
+        self.classes = list(TRAIN_CLASS) + list(TEST_CLASS)
+        self.image_dir = image_dir
+        self.sketch_dir = sketch_dir
+        self.image_model_path = image_model_path
+        self.sketch_model_path = sketch_model_path
+        self.save_dir = save_dir
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
+        self.transform = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])
+        # load sketch model
+        self.sketch_model = VGGNetFeats(pretrained=False, finetune=False)
+        self.load_weight(self.sketch_model, self.sketch_model_path, 'sketch')
+        for param in self.sketch_model.parameters():
+            param.requires_grad = False
+        self.sketch_model = self.sketch_model.cuda()
+        self.sketch_model.eval()
+        # load image model
+        self.image_model = VGGNetFeats(pretrained=False, finetune=False)
+        self.load_weight(self.image_model, self.image_model_path, 'image')
+        for param in self.image_model.parameters():
+            param.requires_grad = False
+        self.image_model = self.image_model.cuda()
+        self.image_model.eval()
+    
+    def load_weight(self, model, path, type='sketch'):
+        checkpoint = torch.load(os.path.join(path, 'model_best.pth'))
+        model.load_state_dict(checkpoint['state_dict_' + type])
+    
+    def load_each_image(self, path):
+        im = Image.open(path).convert(mode='RGB')
+        im = self.transform(im)
+        return im
+    
+    def load_each_sketch(self, path):
+        sk = ImageOps.invert(Image.open(path)).convert(mode='RGB')
+        sk = self.transform(sk)
+        return sk
+    
+    def image2features(self, batch_size):
+        image_path_list = list()
+        image_feature_list = list()
+        sketch_path_list = list()
+        sketch_feature_list = list()
+        # Make path list for image and sketch
+        for cla in self.classes:
+            image_cla_dir = [os.path.join(self.image_dir, cla, fname) for fname in os.listdir(os.path.join(self.image_dir, cla))]
+            image_path_list += image_cla_dir
+            sketch_cla_dir = [os.path.join(self.sketch_dir, cla, fname) for fname in os.listdir(os.path.join(self.sketch_dir, cla))]
+            sketch_path_list += sketch_cla_dir
+        tmp_list = list()
+        # Extract image feature
+        print(len(image_path_list))
+        pbar = tqdm(total=len(image_path_list))
+        for path in image_path_list:
+            tmp_list.append(self.load_each_image(path))
+            if len(tmp_list) == batch_size:
+                batch = np.stack(tmp_list, axis=0)
+                batch = torch.from_numpy(batch).cuda()
+                batch = self.image_model(batch).cpu().detach().numpy()
+                for idx in range(batch.shape[0]):
+                    image_feature_list.append(batch[idx])
+                    pbar.update(1)
+                tmp_list = list()
+        if len(tmp_list) != 0:
+            batch = np.stack(tmp_list, axis=0)
+            batch = torch.from_numpy(batch).cuda()
+            batch = self.image_model(batch).cpu().detach().numpy()
+            for idx in range(batch.shape[0]):
+                image_feature_list.append(batch[idx])
+                pbar.update(1)
+            tmp_list = list()
+        pbar.close()
+        # Extract sketch feature
+        print(len(sketch_path_list))
+        pbar = tqdm(total=len(sketch_path_list))
+        for path in sketch_path_list:
+            tmp_list.append(self.load_each_sketch(path))
+            if len(tmp_list) == batch_size:
+                batch = np.stack(tmp_list, axis=0)
+                batch = torch.from_numpy(batch).cuda()
+                batch = self.sketch_model(batch).cpu().detach().numpy()
+                for idx in range(batch.shape[0]):
+                    sketch_feature_list.append(batch[idx])
+                    pbar.update(1)
+                tmp_list = list()
+        if len(tmp_list) != 0:
+            batch = np.stack(tmp_list, axis=0)
+            batch = torch.from_numpy(batch).cuda()
+            batch = self.sketch_model(batch).cpu().detach().numpy()
+            for idx in range(batch.shape[0]):
+                sketch_feature_list.append(batch[idx])
+                pbar.update(1)
+            tmp_list = list()
+        pbar.close()
+        assert len(image_path_list) == len(image_feature_list)
+        assert len(sketch_path_list) == len(sketch_feature_list)
+        # Save feature to pkl
+        image_f_file = os.path.join(self.save_dir, 'image_features')
+        image_p_file = os.path.join(self.save_dir, 'image_pathes')
+        sketch_f_file = os.path.join(self.save_dir, 'sketch_features')
+        sketch_p_file = os.path.join(self.save_dir, 'sketch_pathes')
+        with open(image_f_file, 'wb') as f:
+            pickle.dump(image_feature_list, f)
+        with open(image_p_file, 'wb') as f:
+            pickle.dump(image_path_list, f)
+        with open(sketch_f_file, 'wb') as f:
+            pickle.dump(sketch_feature_list, f)
+        with open(sketch_p_file, 'wb') as f:
+            pickle.dump(sketch_path_list, f)
+        # Save feature to h5py
+        """
+        image_f_file = os.path.join(self.save_dir, 'image_features')
+        image_p_file = os.path.join(self.save_dir, 'image_pathes')
+        sketch_f_file = os.path.join(self.save_dir, 'sketch_features')
+        sketch_p_file = os.path.join(self.save_dir, 'sketch_pathes')
+        with open(image_f_file, 'rb') as f:
+            image_feature_list = pickle.load(f)
+        with open(image_p_file, 'rb') as f:
+            image_path_list = pickle.load(f)
+        with open(sketch_f_file, 'rb') as f:
+            sketch_feature_list = pickle.load(f)
+        with open(sketch_p_file, 'rb') as f:
+            sketch_path_list = pickle.load(f)
+        ### 
+        """
+        save_h5_file = os.path.join(self.save_dir, 'CNN_feature_512.h5py')
+        with h5py.File(save_h5_file, 'w') as f:
+            for idx in range(len(image_path_list)):
+                _ = f.create_dataset(image_path_list[idx], data=image_feature_list[idx])
+            for idx in range(len(sketch_path_list)):
+                _ = f.create_dataset(sketch_path_list[idx], data=sketch_feature_list[idx])

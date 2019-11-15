@@ -7,19 +7,20 @@ tu = np.array([0.152, 0.159, 0.166, 0.172, 0.176, 0.173, 0.169, 0.164, 0.160, 0.
 
 x = np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 font1 = {'family' : 'Times New Roman',
-'size'   : 9,
+'size'   : 17,
 }
 
-figure, ax = plt.subplots(figsize=(8,4))
+figure, ax = plt.subplots(figsize=(5,4))
+plt.tick_params(labelsize=20)
 labels = ax.get_xticklabels() + ax.get_yticklabels()
 [label.set_fontname('Times New Roman') for label in labels]
-plt.axis([-0.1, 1.1, 0, 0.54])
+plt.axis([-0.1, 1.1, 0, 0.7])
 plt.xlabel("$\omega$", font1)
 plt.ylabel("P@200", font1)
-plt.plot(x, sk_a, color='r', linestyle='-', marker='v', linewidth=1.0, label="Sketchy Ext. (aligned)")
-plt.plot(x, sk_u, color='b', linestyle='-', marker='^', linewidth=1.0, label="Sketchy Ext. (unaligned)")
-plt.plot(x, tu, color='c', linestyle='-', marker='d', linewidth=1.0, label="TU-Berlin Ext.")
+plt.plot(x, sk_a, color='r', linestyle='-', marker='v', linewidth=1.0, label="Sk (a)")
+plt.plot(x, sk_u, color='b', linestyle='-', marker='^', linewidth=1.0, label="Sk (u)")
+plt.plot(x, tu, color='c', linestyle='-', marker='d', linewidth=1.0, label="TU")
 plt.legend(loc='upper right', prop=font1)
 
-plt.savefig('./paper/cvpr2020AuthorKit/latex/omega_fig.pdf', format='pdf', pad_inches = 0, bbox_inches='tight')
+plt.savefig('./paper/ZS-SBIR_1113/omega_fig.pdf', format='pdf', pad_inches = 1, bbox_inches='tight')
 plt.show()

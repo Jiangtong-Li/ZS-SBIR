@@ -4,11 +4,10 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --packed_pkl_nozs ./data/preprocessed/cm_trans_sketch_all_unpair/nozs_packed.pkl \
                                --packed_pkl_zs ./data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
-                               --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024.h5py \
+                               --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568_combined_05.h5py \
                                --shuffle \
                                --sample_times 1 \
                                --pca_size 1024 \
-                               --hidden_size 1024 \
                                --semantics_size 300 \
                                --fix_embedding \
                                --seman_dist l2 \
@@ -23,10 +22,11 @@ python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_00010000000
                                --lr 2e-4 \
                                --print_every 100 \
                                --save_every 500 \
-                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024_updated.h5py \
-                               --raw_size 1024 \
-                               --save_dir ./model/cmdtrans_ranking_1024_dec_es_1024_1024_00_4_noorth/ \
-                               --log_file ./log/cmdtrans_ranking_1024_dec_es_1024_1024_00_4_noorth.log \
-                               --gpu_id 0 \
+                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568_combined_05.h5py \
+                               --raw_size 5568 \
+                               --hidden_size 1024 \
+                               --save_dir ./model/cmdtrans_sketchy_05_strong/ \
+                               --log_file ./log/cmdtrans_sketchy_05_strong.log \
+                               --gpu_id 1 \
                                --cum_num 1 \
-                               --zs
+                               --zs --strong_pair

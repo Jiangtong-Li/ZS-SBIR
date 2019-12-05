@@ -38,6 +38,8 @@ def parse_config():
     parser.add_argument('--save_dir', type=str)
     parser.add_argument('--gpu_id', type=int, default=0)
     parser.add_argument('--zs', action='store_true')
+    parser.add_argument('--tu_berlin', action='store_true')
     parser.add_argument('--cum_num', type=int, default=3)
+    parser.add_argument('--strong_pair', action='store_true')
 
     return parser.parse_args()

@@ -10,20 +10,24 @@ from PIL import Image, ImageOps
 import h5py
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset as torchDataset
 from torchvision.transforms import Normalize, ToTensor
 from torchvision import transforms
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE_SIZE, SEMANTICS_REPLACE
+from package.dataset.utils import match_filename, TEST_CLASS, TRAIN_CLASS, IMAGE_SIZE, SEMANTICS_REPLACE, TRAIN_CLASS_TUBERLIN_I, TEST_CLASS_TUBERLIN_I
 from package.model.vgg import vgg16
 
 class CMDTrans_data(torchDataset):
     def __init__(self, sketch_dir, image_dir, stats_file, embedding_file, loaded_data, preprocess_data, 
-                 raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False, ranking=False):
+                 raw_data, zs=True, sample_time=10, cvae=False, paired=False, cut_part=False, ranking=False, 
+                 tu_berlin=False, strong_pair=False):
         super(CMDTrans_data, self).__init__()
+        self.strong_pair=strong_pair
         self.excluded_data = ['./data/256x256/sketch/tx_000100000000/airplane/n02691156_359-5.png', './data/256x256/sketch/tx_000100000000/alarm_clock/n02694662_3449-5.png']
+        self.tu_berlin = tu_berlin
         self.ranking = ranking
         self.cvae = cvae
         self.cut_part = cut_part
@@ -36,9 +40,14 @@ class CMDTrans_data(torchDataset):
         self.preprocess_data = preprocess_data
         self.raw_data = raw_data
         self.sample_time = sample_time
-        self.train_class = TRAIN_CLASS
-        self.test_class = TEST_CLASS
-        self.overall_class = self.train_class | self.test_class
+        if not tu_berlin:
+            self.train_class = set(TRAIN_CLASS)
+            self.test_class = set(TEST_CLASS)
+        else:
+            self.strong_pair = False
+            self.train_class = set(TRAIN_CLASS_TUBERLIN_I)
+            self.test_class = set(TEST_CLASS_TUBERLIN_I)
+        self.overall_class = set(self.train_class) | set(self.test_class)
         self.zs = zs
         self.class2path_sketch = dict() # class: set(path) | for sketch | for train
         self.class2path_image = dict() # class: set(path) | for image | for train
@@ -57,7 +66,41 @@ class CMDTrans_data(torchDataset):
         random.shuffle(self.id2path)
 
     def __getitem__(self, index):
-        if self.ranking:
+        if not self.strong_pair:
+            sketch = self.load_feature_use(self.id2path[index], 'all')
+            cla = self.path2class_sketch[self.id2path[index]]
+            image_p = list()
+            image_p2 = list()
+            image_n = list()
+            for _ in range(self.sample_time):
+                _image_p, _path_p = self.pair_similar(self.id2path[index])
+                _image_p2, _path_p2 = self.pair_similar(self.id2path[index])
+                _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
+                image_p.append(_image_p)
+                image_p2.append(_image_p2)
+                image_n.append(_image_n)
+            image_p = np.mean(np.stack(image_p, axis=1), axis=1)
+            image_p2 = np.mean(np.stack(image_p2, axis=1), axis=1)
+            image_n = np.mean(np.stack(image_n, axis=1), axis=1)
+            return sketch, image_p, image_p2, image_n
+        elif self.strong_pair:
+            sketch = self.load_feature_use(self.id2path[index], 'all')
+            cla = self.path2class_sketch[self.id2path[index]]
+            image_pair1 = list()
+            image_pair2 = list()
+            image_n = list()
+            for _ in range(self.sample_time):
+                _image_pair1, _ = self.pair_unpair(self.id2path[index])
+                _image_pair2, _ = self.pair_unpair(self.id2path[index])
+                _image_n, _path_n = self.pair_dissimilar(self.id2path[index])
+                image_pair1.append(_image_pair1)
+                image_pair2.append(_image_pair2)
+                image_n.append(_image_n)
+            image_pair1 = np.mean(np.stack(image_pair1, axis=1), axis=1)
+            image_pair2 = np.mean(np.stack(image_pair2, axis=1), axis=1)
+            image_n = np.mean(np.stack(image_n, axis=1), axis=1)
+            return sketch, image_pair1, image_pair2, image_n
+        elif self.ranking:
             sketch = self.load_feature_use(self.id2path[index], 'all')
             cla = self.path2class_sketch[self.id2path[index]]
             image_pair = list()
@@ -163,7 +206,8 @@ class CMDTrans_data(torchDataset):
                 yield torch.stack(ims), label
                 ims = []
                 label = []
-        yield torch.stack(ims), label
+        if ims != list():
+            yield torch.stack(ims), label
 
     def load_test_sketch(self, batch_size=512):
         ims = []
@@ -181,7 +225,8 @@ class CMDTrans_data(torchDataset):
                 yield torch.stack(ims), label
                 ims = []
                 label = []
-        yield torch.stack(ims), label
+        if ims != list():
+            yield torch.stack(ims), label
 
     def load_train_images(self, batch_size=512):
         ims = []
@@ -206,6 +251,17 @@ class CMDTrans_data(torchDataset):
                 ims = []
                 label = []
         yield torch.stack(ims), label
+    
+    def load4tsne(self, category):
+        im = []
+        sk = []
+        path_im = list(self.class2path_image_test[category])
+        path_sk = list(self.class2path_sketch_test[category])
+        for path in path_im:
+            im.append(self.load_feature_use(path, 'all'))
+        for path in path_sk:
+            sk.append(self.load_feature_use(path, 'all'))
+        return torch.from_numpy(np.stack(im,0)), path_im, torch.from_numpy(np.stack(sk,0)), path_sk
 
     def load(self):
         if os.path.exists(self.loaded_data):
@@ -286,11 +342,15 @@ class CMDTrans_data(torchDataset):
         word2vec = gensim.models.KeyedVectors.load_word2vec_format(self.embedding_file, binary=True)
         for idx, item in enumerate(self.id2class):
             if item not in word2vec:
+                continue
                 item = SEMANTICS_REPLACE[item]
             self.pretrain_embedding[idx] = word2vec[item]
         self.pretrain_embedding = torch.from_numpy(self.pretrain_embedding)
         
-        assert len(self.id2class) == 125
+        if not self.tu_berlin:
+            assert len(self.id2class) == 125
+        else:
+            assert len(self.id2class) == 250
         assert len(self.path2class_sketch.keys()) == len(self.id2path)
         preloaded_data = dict()
         # Semantics part
@@ -314,8 +374,11 @@ class CMDTrans_data(torchDataset):
         return
 
 class image2features:
-    def __init__(self, image_dir, sketch_dir, save_dir):
-        self.classes = list(TRAIN_CLASS) + list(TEST_CLASS)
+    def __init__(self, image_dir, sketch_dir, save_dir, dataset='sketchy'):
+        if dataset == 'sketchy':
+            self.classes = list(TRAIN_CLASS) + list(TEST_CLASS)
+        else:
+            self.classes = list(TRAIN_CLASS_TUBERLIN_I) + list(TEST_CLASS_TUBERLIN_I)
         self.image_dir = image_dir
         self.sketch_dir = sketch_dir
         self.save_dir = save_dir
@@ -328,7 +391,7 @@ class image2features:
         self.backbone.eval()
         self.ToTensor = ToTensor()
         self.Normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    
+
     def load_each_image_use(self, path):
         image = cv2.imread(path)
         try:
@@ -513,13 +576,12 @@ class image2features:
 class VGGNetFeats(nn.Module):
     def __init__(self, pretrained=True, finetune=True):
         super(VGGNetFeats, self).__init__()
-        model = models.vgg16(pretrained=pretrained)
+        model = vgg16(pretrained=pretrained)
         for param in model.parameters():
             param.requires_grad = finetune
         self.features = model.features
         self.classifier = nn.Sequential(
-            *list(model.classifier.children())[:-1],
-            nn.Linear(4096, 512)
+            *list(model.classifier.children())[:-1]
         )
 
     def forward(self, x):
@@ -527,8 +589,11 @@ class VGGNetFeats(nn.Module):
         x = self.classifier(x.view(x.size(0), -1))
         return x
 class image2features_pcyc:
-    def __init__(self, image_dir, sketch_dir, save_dir, image_model_path, sketch_model_path):
-        self.classes = list(TRAIN_CLASS) + list(TEST_CLASS)
+    def __init__(self, image_dir, sketch_dir, save_dir, image_model_path, sketch_model_path, tu_berlin=False):
+        if not tu_berlin:
+            self.classes = list(TRAIN_CLASS) + list(TEST_CLASS)
+        else:
+            self.classes = list(TRAIN_CLASS_TUBERLIN_I) + list(TEST_CLASS_TUBERLIN_I)
         self.image_dir = image_dir
         self.sketch_dir = sketch_dir
         self.image_model_path = image_model_path
@@ -538,14 +603,17 @@ class image2features_pcyc:
             os.makedirs(self.save_dir)
         self.transform = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])
         # load sketch model
-        self.sketch_model = VGGNetFeats(pretrained=False, finetune=False)
+        # self.sketch_model = VGGNetFeats(pretrained=False, finetune=False)
+        self.sketch_model = vgg16(pretrained=True, return_type=3, dropout=0)
         self.load_weight(self.sketch_model, self.sketch_model_path, 'sketch')
         for param in self.sketch_model.parameters():
             param.requires_grad = False
         self.sketch_model = self.sketch_model.cuda()
         self.sketch_model.eval()
         # load image model
-        self.image_model = VGGNetFeats(pretrained=False, finetune=False)
+        # self.image_model = VGGNetFeats(pretrained=False, finetune=False)
+        self.image_model = vgg16(pretrained=True, return_type=3, dropout=0)
+        print(self.image_model)
         self.load_weight(self.image_model, self.image_model_path, 'image')
         for param in self.image_model.parameters():
             param.requires_grad = False
@@ -554,7 +622,7 @@ class image2features_pcyc:
     
     def load_weight(self, model, path, type='sketch'):
         checkpoint = torch.load(os.path.join(path, 'model_best.pth'))
-        model.load_state_dict(checkpoint['state_dict_' + type])
+        model.load_state_dict(checkpoint['state_dict_' + type], strict=False)
     
     def load_each_image(self, path):
         im = Image.open(path).convert(mode='RGB')
@@ -653,7 +721,7 @@ class image2features_pcyc:
             sketch_path_list = pickle.load(f)
         ### 
         """
-        save_h5_file = os.path.join(self.save_dir, 'CNN_feature_512.h5py')
+        save_h5_file = os.path.join(self.save_dir, 'CNN_feature_5568_pcyc.h5py')
         with h5py.File(save_h5_file, 'w') as f:
             for idx in range(len(image_path_list)):
                 _ = f.create_dataset(image_path_list[idx], data=image_feature_list[idx])

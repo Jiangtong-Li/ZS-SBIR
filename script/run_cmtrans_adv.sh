@@ -1,32 +1,32 @@
-python ./src/main_cmdtrans.py  --sketch_dir ./data/256x256/sketch/tx_000100000000 \
+python ./src/main_cmdtrans_adv.py  --sketch_dir ./data/256x256/sketch/tx_000100000000 \
                                --image_dir /./data/256x256/EXTEND_image_sketchy \
                                --stats_file ./data/info/stats.csv \
                                --packed_pkl_nozs ./data/preprocessed/cm_trans_sketch_all_unpair/nozs_packed.pkl \
                                --packed_pkl_zs ./data/preprocessed/cm_trans_sketch_all_unpair/zs_packed.pkl \
                                --embedding_file ./data/GoogleNews-vectors-negative300.bin \
-                               --preprocess_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_1024.h5py \
-                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568_updated.h5py \
+                               --preprocess_data ./data/preprocessed/cm_trans_sketchy_pcyc/CNN_feature_512.h5py \
                                --shuffle \
                                --sample_times 1 \
                                --pca_size 1024 \
-                               --raw_size 5568 \
-                               --hidden_size 1024 \
                                --semantics_size 300 \
                                --fix_embedding \
                                --seman_dist l2 \
                                --triplet_dist l2 \
-                               --margin1 0.0 \
+                               --margin1 5.0 \
                                --margin2 10.0 \
                                --patience 20 \
                                --batch_size 64 \
-                               --num_worker 4 \
-                               --dropout 0.3 \
+                               --num_worker 0 \
+                               --dropout 0.0 \
                                --warmup_steps 1000 \
                                --lr 2e-4 \
                                --print_every 100 \
                                --save_every 500 \
-                               --save_dir ./model/cmdtrans_ranking_1024_dec_e_5568_5568/ \
-                               --log_file ./log/cmdtrans_ranking_1024_dec_e_5568_5568.log \
-                               --gpu_id 0 \
+                               --raw_data ./data/preprocessed/cm_trans_sketch_all_unpair_relued/CNN_feature_5568_updated.h5py \
+                               --raw_size 5568 \
+                               --hidden_size 1024 \
+                               --save_dir ./model/cmdtrans_ranking_1024_dec_s_5568_5568_00_5_noorth_adv/ \
+                               --log_file ./log/cmdtrans_ranking_1024_dec_s_5568_5568_00_5_noorth_adv.log \
+                               --gpu_id 1 \
                                --cum_num 1 \
                                --zs

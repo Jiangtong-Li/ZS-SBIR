@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
 from torch.utils.tensorboard import SummaryWriter
 
-from package.model.cmd_translate import CMDTrans_model
+from package.model.cmd_translate_adv import CMDTrans_model
 from package.loss.regularization import _Regularization
 from package.dataset.data_cmd_translate import CMDTrans_data
 from package.args.cmd_trans_args import parse_config
@@ -39,8 +39,7 @@ def train(args):
     logger.info('Loading the data ...')
     data = CMDTrans_data(args.sketch_dir, args.image_dir, args.stats_file, args.embedding_file, 
                          packed, args.preprocess_data, args.raw_data, zs=args.zs, sample_time=1, 
-                         cvae=True, paired=True, cut_part=False, ranking=True, tu_berlin=args.tu_berlin, 
-                         strong_pair=args.strong_pair)
+                         cvae=True, paired=False, cut_part=False, ranking=True, tu_berlin=args.tu_berlin)
     dataloader_train = DataLoader(dataset=data, num_workers=args.num_worker, 
                                   batch_size=args.batch_size,
                                   shuffle=args.shuffle)
@@ -52,10 +51,10 @@ def train(args):
     logger.info('Building the model ...')
     model = CMDTrans_model(args.pca_size, args.raw_size, args.hidden_size, args.semantics_size, data.pretrain_embedding.float(), 
                  dropout_prob=args.dropout, fix_embedding=args.fix_embedding, seman_dist=args.seman_dist, 
-                 triplet_dist=args.triplet_dist, margin1=args.margin1, margin2=args.margin2, logger=logger)
+                 triplet_dist=args.triplet_dist, margin1=args.margin1, margin2=args.margin2, logger=logger, lr=args.lr)
     logger.info('Building the optimizer ...')
-    optimizer = Adam(params=model.parameters(), lr=args.lr, betas=(0.5, 0.999))
-    #optimizer = SGD(params=model.parameters(), lr=args.lr, momentum=0.9)
+    optimizer_gen = model.optimizer_gen
+    optimizer_disc = model.optimizer_disc
     l1_regularization = _Regularization(model, args.l1_weight, p=1, logger=logger)
     l2_regularization = _Regularization(model, args.l2_weight, p=2, logger=logger)
 
@@ -63,10 +62,12 @@ def train(args):
         logger.info('Loading pretrained model from {} ...'.format(args.start_from))
         ckpt = torch.load(args.start_from, map_location='cpu')
         model.load_state_dict(ckpt['model'])
-        optimizer.load_state_dict(ckpt['optimizer'])
+        optimizer_gen.load_state_dict(ckpt['optimizer_gen'])
+        optimizer_disc.load_state_dict(ckpt['optimizer_disc'])
     if args.gpu_id != -1:
         model.cuda(args.gpu_id)
-    optimizer.zero_grad()
+    optimizer_gen.zero_grad()
+    optimizer_disc.zero_grad()
 
     # six design loss and two reg loss
     loss_triplet_acm = 0.
@@ -76,6 +77,10 @@ def train(args):
     loss_ske_acm = 0.
     loss_l1_acm = 0.
     loss_l2_acm = 0.
+    loss_gen_sk_acm = 0.
+    loss_gen_im_acm = 0.
+    loss_dis_sk_acm = 0.
+    loss_dis_im_acm = 0.
     # loading batch and optimization step
     batch_acm = 0
     global_step = 0
@@ -88,7 +93,7 @@ def train(args):
     logger.info('Model Structure:')
     logger.info(model)
     logger.info('Begin Training !')
-    loss_weight = dict([('kl',1.0), ('triplet', 1.0), ('orthogonality', 0.01), ('image', 1.0), ('sketch', 10.0)])
+    loss_weight = dict([('kl',1.0), ('triplet', 1.0), ('orthogonality', 0.01), ('image', 0.5), ('sketch', 10.0)])
     while True:
         if patience <= 0:
             break
@@ -100,6 +105,10 @@ def train(args):
                 logger.info('        Loss/KL {:.3}'.format(loss_kl_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/Image {:.3}'.format(loss_img_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/Sketch {:.3}'.format(loss_ske_acm/args.print_every/args.cum_num))
+                logger.info('        Loss/Gen_Image {:.3}'.format(loss_gen_im_acm/args.print_every/args.cum_num))
+                logger.info('        Loss/Gen_Sketch {:.3}'.format(loss_gen_sk_acm/args.print_every/args.cum_num))
+                logger.info('        Loss/Dis_Image {:.3}'.format(loss_dis_im_acm/args.print_every/args.cum_num))
+                logger.info('        Loss/Dis_Sketch {:.3}'.format(loss_dis_sk_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/L1 {:.3}'.format(loss_l1_acm/args.print_every/args.cum_num))
                 logger.info('        Loss/L2 {:.3}'.format(loss_l2_acm/args.print_every/args.cum_num))
                 loss_triplet_acm = 0.
@@ -109,11 +118,15 @@ def train(args):
                 loss_ske_acm = 0.
                 loss_l1_acm = 0.
                 loss_l2_acm = 0.
+                loss_gen_sk_acm = 0.
+                loss_gen_im_acm = 0.
+                loss_dis_sk_acm = 0.
+                loss_dis_im_acm = 0.
 
             if global_step % args.save_every == 0 % args.save_every and batch_acm % args.cum_num == 0 and global_step :
                 if not os.path.exists(args.save_dir):
                     os.mkdir(args.save_dir)
-                torch.save({'args':args, 'model':model.state_dict(), 'optimizer':optimizer.state_dict()},
+                torch.save({'args':args, 'model':model.state_dict(), 'optimizer_gen':optimizer_gen.state_dict(), 'optimizer_disc':optimizer_disc.state_dict()},
                            '{}/Iter_{}.pkl'.format(args.save_dir,global_step))
 
                 ### Evaluation
@@ -138,7 +151,6 @@ def train(args):
                 sketch_feature1 = list() # S
                 sketch_feature2 = list() # G
                 for sketch, label in data.load_test_sketch(batch_size=args.batch_size):
-                    sketch = relu(sketch)
                     if args.gpu_id != -1:
                         sketch = sketch.float().cuda(args.gpu_id)
                     sketch_label += label
@@ -151,7 +163,7 @@ def train(args):
 
                 dists_cosine1 = cosine_distance(image_feature1, sketch_feature1).cpu().detach().numpy()
                 dists_cosine2 = cosine_distance(image_feature2, sketch_feature2).cpu().detach().numpy()
-
+                torch.cuda.empty_cache()
                 Precision_list, mAP_list, lambda_list, Precision_c, mAP_c = \
                     cal_matrics(dists_cosine1, dists_cosine2, image_label, sketch_label)
                 
@@ -175,7 +187,8 @@ def train(args):
                     writer.add_scalar('Best/Precision_200', best_precision, best_iter)
                     logger.info('=== Iter {}, Best Precision_200 {:.3} ==='.format(global_step, best_precision))
                     torch.save({'args':args, 'model':model.state_dict(), \
-                        'optimizer':optimizer.state_dict()}, '{}/Best.pkl'.format(args.save_dir))
+                        'optimizer_gen':optimizer_gen.state_dict(), 'optimizer_disc':optimizer_disc.state_dict()}, \
+                        '{}/Best.pkl'.format(args.save_dir))
                 else:
                     patience -= 1
             if patience <= 0:
@@ -184,23 +197,28 @@ def train(args):
             model.train()
             batch_acm += 1
             if global_step <= args.warmup_steps:
-                update_lr(optimizer, args.lr*global_step/args.warmup_steps)
+                update_lr(optimizer_disc, 0.01*global_step/args.warmup_steps)
+                update_lr(optimizer_gen, args.lr*global_step/args.warmup_steps)
 
             if args.gpu_id != -1:
-                sketch_batch = relu(sketch_batch).float().cuda(args.gpu_id)
-                image_pair_batch = relu(image_pair_batch).float().cuda(args.gpu_id)
-                image_unpair_batch = relu(image_unpair_batch).float().cuda(args.gpu_id)
-                image_n_batch = relu(image_n_batch).float().cuda(args.gpu_id)
+                sketch_batch = sketch_batch.float().cuda(args.gpu_id)
+                image_pair_batch = image_pair_batch.float().cuda(args.gpu_id)
+                image_unpair_batch = image_unpair_batch.float().cuda(args.gpu_id)
+                image_n_batch = image_n_batch.float().cuda(args.gpu_id)
 
-            loss = model(sketch_batch, image_pair_batch, image_unpair_batch, image_n_batch)
+            loss_gen, loss_disc = model(sketch_batch, image_pair_batch, image_unpair_batch, image_n_batch)
 
             loss_l1 = l1_regularization()
             loss_l2 = l2_regularization()
-            loss_kl = loss['kl'].item()
-            loss_orth = loss['orthogonality'].item()
-            loss_triplet = loss['triplet'].item()
-            loss_img = loss['image'].item()
-            loss_ske = loss['sketch'].item()
+            loss_kl = loss_gen['kl'].item()
+            loss_orth = loss_gen['orthogonality'].item()
+            loss_triplet = loss_gen['triplet'].item()
+            loss_img = loss_gen['image'].item()
+            loss_ske = loss_gen['sketch'].item()
+            loss_gen_sk = loss_gen['sketch_dis'].item()
+            loss_gen_im = loss_gen['image_dis'].item()
+            loss_dis_sk = loss_disc['sketch_dis'].item()
+            loss_dis_im = loss_disc['image_dis'].item()
 
             loss_l1_acm += (loss_l1.item() / args.l1_weight)
             loss_l2_acm += (loss_l2.item() / args.l2_weight)
@@ -209,28 +227,51 @@ def train(args):
             loss_triplet_acm += loss_triplet
             loss_img_acm += loss_img
             loss_ske_acm += loss_ske
+            loss_gen_sk_acm += loss_gen_sk
+            loss_gen_im_acm += loss_gen_im
+            loss_dis_sk_acm += loss_dis_sk
+            loss_dis_im_acm += loss_dis_im
 
             writer.add_scalar('Loss/KL', loss_kl, global_step)
             writer.add_scalar('Loss/Orthogonality', loss_orth, global_step)
             writer.add_scalar('Loss/Triplet', loss_triplet, global_step)
             writer.add_scalar('Loss/Image', loss_img, global_step)
             writer.add_scalar('Loss/Sketch', loss_ske, global_step)
+            writer.add_scalar('Loss/Gen_Image', loss_gen_im, global_step)
+            writer.add_scalar('Loss/Gen_Sketch', loss_gen_sk, global_step)
+            writer.add_scalar('Loss/Dis_Image', loss_dis_im, global_step)
+            writer.add_scalar('Loss/Dis_Sketch', loss_dis_sk, global_step)
             writer.add_scalar('Loss/Reg_l1', (loss_l1.item() / args.l1_weight), global_step)
             writer.add_scalar('Loss/Reg_l2', (loss_l2.item() / args.l2_weight), global_step)
 
             loss_ = 0
-            loss_ += loss['image']*loss_weight['image']
-            loss_ += loss['sketch']*loss_weight['sketch']
-            loss_ += loss['triplet']*loss_weight['triplet']
-            loss_ += loss['kl']*loss_weight['kl']
-            #loss_ += loss['orthogonality']*loss_weight['orthogonality']
+            loss_ += loss_gen['image']*loss_weight['image']
+            loss_ += loss_gen['sketch']*loss_weight['sketch']
+            loss_ += loss_gen['triplet']*loss_weight['triplet']
+            loss_ += loss_gen['kl']*loss_weight['kl']
+            #loss_ += loss_gen['orthogonality']*loss_weight['orthogonality']
+            wait_num = args.warmup_steps
+            if global_step > wait_num:
+                gen_weight = min(1, (global_step - wait_num)/wait_num)
+                loss_ += loss_gen['sketch_dis']*loss_weight['sketch']*gen_weight
+                loss_ += loss_gen['image_dis']*loss_weight['image']*gen_weight
+            loss_.backward(retain_graph=True)
+
+            if batch_acm % args.cum_num == 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer_gen.step()
+                global_step += 1
+                optimizer_gen.zero_grad()
+            
+            loss_ = 0
+            loss_ += loss_disc['sketch_dis']*loss_weight['sketch']
+            loss_ += loss_disc['image_dis']*loss_weight['image']
             loss_.backward()
 
             if batch_acm % args.cum_num == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-                optimizer.step()
-                global_step += 1
-                optimizer.zero_grad()
+                optimizer_disc.step()
+                optimizer_disc.zero_grad()
 
 if __name__ == '__main__':
     args = parse_config()

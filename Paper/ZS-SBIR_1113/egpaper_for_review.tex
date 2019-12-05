@@ -19,7 +19,7 @@
 % run, let it finish, and you should be clear).
 \usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
 
-% \cvprfinalcopy % *** Uncomment this line for the final submission
+\cvprfinalcopy % *** Uncomment this line for the final submission
 
 \def\cvprPaperID{8238} % *** Enter the CVPR Paper ID here
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
@@ -31,20 +31,26 @@
 %%%%%%%%% TITLE
 \title{Bi-Directional Domain Translation for Zero-Shot Sketch-Based Image Retrieval}
 
-\author{First Author\\
-Institution1\\
-Institution1 address\\
-{\tt\small firstauthor@i1.org}
+\author{Jiangtong Li\\
+Shanghai Jiao Tong University\\
+{\tt\small jiangtongli1997@gmail.com}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
 % just like the second author.
 % To save space, use either the email address or home page, not both
 \and
-Second Author\\
-Institution2\\
-First line of institution2 address\\
-{\tt\small secondauthor@i2.org}
+Zhixin Ling\\
+Shanghai Jiao Tong University\\
+{\tt\small 1069066484@sjtu.edu.cn}
+\and 
+Li Niu\\
+Shanghai Jiao Tong University\\
+{\tt\small ustcnewly@gmail.com}
+\and 
+Liqing Zhang\\
+Shanghai Jiao Tong University\\
+{\tt\small zhang-lq@cs.sjtu.edu.cn}
 }
 
 \maketitle
@@ -65,14 +71,14 @@ First line of institution2 address\\
 \section{Introduction}
 In recent years, with the rapid growth of multimedia data on the internet, image retrieval is playing a more and more important role in many fields, such as remote sensing and e-commerce. 
 Since sketch can be easily drawn and reveal the characteristics of the target images, sketch-based image retrieval (SBIR), which uses a sketch to retrieve the images of the same category, has become widely accepted among users. 
-Therefore, SBIR has also attracted widespread attention in research community \cite{del1997visual, cao2010mindfinder, eitz2010evaluation, eitz2010sketch, cao2011edgel, hu2011bag, zhou2012sketch, hu2013performance, cao2013sym, parui2014similarity, james2014reenact, wang2015sketch, saavedra2015sketch, li2016fine, yu2016sketch, qi2016sketch, sangkloy2016sketchy, lu2018learning, saavedra2014sketch}. 
+Therefore, SBIR has also attracted widespread attention in research community \cite{del1997visual, cao2010mindfinder, eitz2010evaluation, eitz2010sketch, cao2011edgel, hu2011bag, zhou2012sketch, hu2013performance, cao2013sym, parui2014similarity, james2014reenact, wang2015sketch, saavedra2015sketch, li2016fine, yu2016sketch, qi2016sketch, sangkloy2016sketchy, lu2018learning}. 
 In the conventional setting, it is assumed that the images and sketches in training and test sets share the same set of categories.
 However, in real-world applications, the categories of test sketches/images may be out of the scope of training categories.
 
 \begin{figure}
 \centering
 \includegraphics[width=1\linewidth]{change.pdf}
-   \caption{For both seen categories and unseen categories, we visualize the feature of a query sketch (red star) and image features from different categories (points of different colors), which are obtained by SaN \cite{yu2017sketch}, together with the query sketch and an image from the same category.}
+   \caption{For both seen categories and unseen categories, we visualize the feature of a query sketch (red star) and image features from different categories (points of different colors) obtained by SBIR method SaN \cite{yu2017sketch}, together with the query sketch and an image from the same category.}
 \label{fig:inshort}
 \vspace{-15pt}
 \end{figure}
@@ -81,7 +87,7 @@ In this paper, we focus on a more challenging task called zero-shot sketch-based
 Traditional SBIR methods suffer from sharp performance drop in ZS-SBIR setting \cite{yelamarthi2018zero}, probably because they are prone to learn category-based retrieval.
 Specifically, based on the analysis in \cite{yelamarthi2018zero}, since the evaluation methodology is category-based, traditional SBIR methods may take a shortcut by correlating sketches/images with their category labels and retrieving the images from the same category as the query sketch, which is very effective when test data share the same categories as training data. 
 However, SBIR methods often fail when the test categories are not present in the training stage. 
-As illustrated in Figure~\ref{fig:inshort}, based on the pairwise distance in feature space, SBIR method SaN \cite{yu2017sketch} succeeds in retrieving the images from a seen category ``giraffe" given a query sketch, but fails on an unseen category ``church". We conjecture that to generalize well from seen categories to unseen categories, a model should learn to align the structure information (\emph{e.g.}, outline, shape) of sketches with the corresponding structure information of images (\emph{e.g.}, the structure of church spire in Figure~\ref{fig:inshort}), which is referred to as structure-based retrieval. 
+As illustrated in Figure~\ref{fig:inshort}, based on the pairwise distance in feature space, SBIR method SaN \cite{yu2017sketch} succeeds in retrieving the images from a seen category ``giraffe" when given a query ``giraffe" sketch, but fails on an unseen category ``church". We conjecture that to generalize well from seen categories to unseen categories, a model should learn to align the structure information (\emph{e.g.}, outline, shape) of sketches with the corresponding structure information of images (\emph{e.g.}, the structure of church spire in Figure~\ref{fig:inshort}), which is referred to as structure-based retrieval and ignored by traditional SBIR methods like~\cite{yu2017sketch}. 
 
 Existing ZS-SBIR methods can be categorized into three groups:
 (1) using a generative model based on aligned sketch-image pairs (a sketch is drawn based on a given image and thus has roughly the same outline as this image) to reduce the gap between seen and unseen categories \cite{yelamarthi2018zero}; 
@@ -128,7 +134,7 @@ Overall speaking, they disentangle latent representation into domain-specific re
 \begin{figure*}
 \centering
 \includegraphics[width=0.95\linewidth]{model_structure.pdf}   
-\caption{An overview of our framework. We first adopt VGG-16 \cite{simonyan2014very} to extract features from images and sketch. Then we disentangle image feature into appearance feature and structure feature, through which bi-directional domain translation is performed between image feature space and sketch feature space.}
+\caption{An overview of our framework. We first adopt VGG-16 \cite{simonyan2014very} to extract features from image and sketch. Then we disentangle image feature into appearance feature and structure feature, through which bi-directional domain translation is performed between image feature space and sketch feature space.}
 \label{fig:structure}
 \vspace{-10pt}
 \end{figure*}
@@ -144,7 +150,7 @@ Formally, we are given a sketch dataset $S_{sk}=\{(\mathbf{x}_i^{sk}, y_i)|y_i \
 Following the zero-shot setting in \cite{yelamarthi2018zero,wang2019stacked}, we split all categories $\mathcal{Y}$ into $\mathcal{Y}_{tr}$ and $\mathcal{Y}_{te}$, in which no overlap exists between two label sets, \emph{i.e.}, $\mathcal{Y}_{tr} \cap \mathcal{Y}_{te} = \emptyset$. 
 Based on the partition of label set $\mathcal{Y}$, we can split the sketch (\emph{resp.}, image) dataset into $S^{tr}_{sk}$ and $S^{te}_{sk}$ (\emph{resp.}, $S^{tr}_{im}$ and $S^{te}_{im}$).
 In the training stage, our model can only process the data in $S^{tr}_{sk}$ and $S_{im}^{tr}$. 
-During testing, given a sketch $x_{sk}$ from $S^{te}_{sk}$, our model needs to retrieve the images belonging to the same category as $\mathbf{x}_{sk}$ from test images gallery $S^{te}_{im}$.
+During testing, given a sketch $\mathbf{x}_{sk}$ from $S^{te}_{sk}$, our model needs to retrieve the images belonging to the same category as $\mathbf{x}_{sk}$ from test images gallery $S^{te}_{im}$.
 
 The overall framework of our method is illustrated in Figure \ref{fig:structure}. 
 We input a triplet containing a pair of sketch $\mathbf{x}_{sk}$ and image $\mathbf{x}_{im}$ from the same category and another image $\mathbf{x}_{im-}$ from a different category. First, a pre-trained model extracts features $\mathbf{f}_{sk}$ (\emph{resp.}, $\mathbf{f}_{im}$ and $\mathbf{f}_{im-}$) from $\mathbf{x}_{sk}$ (\emph{resp.}, $\mathbf{x}_{im}$ and $\mathbf{x}_{im-}$).
@@ -170,7 +176,7 @@ Given an image feature $\mathbf{f}_{im}$, we adopt two image encoders $E_{im}^{a
     \mathbf{f}_{im}^{ap} \!=\! E_{im}^{ap}(\mathbf{f}_{im}); \mathbf{f}_{im}^{st} \!=\! E_{im}^{st}(\mathbf{f}_{im}); \mathbf{f}_{sk}^{st} \!=\! E_{sk}^{st}(\mathbf{f}_{sk}).
 \end{align}
 
-In each training step, apart from sampling a positive sketch-image pair ($\mathbf{f}_{sk}$, $\mathbf{f}_{im}$) from the same category, we also sample a negative image $\mathbf{f}_{im-}$, which belongs to other categories. Therefore, a triple ($\mathbf{f}_{sk}$, $\mathbf{f}_{im}$, $\mathbf{f}_{im-}$) is fed into the network. We expect that the structure features of images and sketches are in the same feature space. Moreover, in the structure feature space shared by sketch and image, we expect intra-class coherence and inter-class separability across different domains (\emph{i.e.}, sketch domain and image domain). Specifically, we expect to pull sketches close to the images of the same category and push sketches apart from the images of a different category. With the above purpose, we employ a ranking loss with $L_2$ distance:
+In each training step, apart from sampling a positive sketch-image pair ($\mathbf{f}_{sk}$, $\mathbf{f}_{im}$) of the same category, we also sample a negative image $\mathbf{f}_{im-}$, which belongs to other categories. Therefore, a triple ($\mathbf{f}_{sk}$, $\mathbf{f}_{im}$, $\mathbf{f}_{im-}$) is fed into the network. We expect that the structure features of images and sketches are in the same feature space. Moreover, in the structure feature space shared by sketch and image, we expect intra-class coherence and inter-class separability across different domains (\emph{i.e.}, sketch domain and image domain). Specifically, we expect to pull sketches close to the images of the same category and push sketches apart from the images of a different category. With the above purpose, we employ a ranking loss with $L_2$ distance:
 \vspace{-5pt}
 \begin{align} \label{eqn:rank_loss}
         \mathcal{L}_{rk} \!=\! ||\mathbf{f}_{sk}^{st}\!-\!\mathbf{f}_{im}^{st}||_{2}\!+\!\max(0,\!m\!-\!||\mathbf{f}_{sk}^{st}\!-\!\mathbf{f}_{im-}^{st}||_{2}),
@@ -184,7 +190,7 @@ To ensure that the image feature are disentangled in the structure feature space
     \mathcal{L}_{or} = cos(\mathbf{f}_{im}^{ap}, \mathbf{f}_{im}^{sk}) = \frac{\mathbf{f}_{im}^{ap} \cdot \mathbf{f}_{im}^{st}}{||\mathbf{f}_{im}^{ap}||_2 ||\mathbf{f}_{im}^{ap}||_2},
 \end{align}
 where $\cdot$ means the the dot product between two vectors.
-Note that the $\mathbf{f}_{im}^{ap}$ and $\mathbf{f}_{im}^{sk}$ are the output of ReLU activation, so $cos(\cdot}, \cdot)$ is always non-negative and minimizing (\ref{eqn:orth_loss}) will push $cos(\cdot}, \cdot)$ towards zero.
+Note that the $\mathbf{f}_{im}^{ap}$ and $\mathbf{f}_{im}^{sk}$ are the output of ReLU activation, so $cos(\cdot, \cdot)$ is always non-negative and minimizing (\ref{eqn:orth_loss}) will push $cos(\cdot, \cdot)$ towards zero.
 
 \subsubsection{Bi-directional Domain Translation}
 To further help learn disentangled representations and fully utilize the disentangled image features, we perform bi-directional domain translation between sketch domain and image domain.
@@ -192,33 +198,33 @@ To further help learn disentangled representations and fully utilize the disenta
 For image-to-sketch translation, we employ a decoder $G_{sk}$ to reconstruct sketch feature $\mathbf{f}_{sk}$ based on $\mathbf{f}_{im}^{st}$, considering that $\mathbf{f}_{sk}$ and $\mathbf{f}_{im}$ belong to the same category. By denoting $\hat{\mathbf{f}}_{sk} = G_{sk}(\mathbf{f}_{im}^{st})$, we adopt a reconstruction loss $||\mathbf{f}_{sk}-\hat{\mathbf{f}}_{sk}||_2$. Furthermore, we employ an adversarial loss to guarantee that the distribution of generated sketch features is close to that of real sketch features. The adversarial loss is implemented based on a discriminator $D_{sk}$, which distinguishes generated sketch features from real ones. Thus, the total loss of image-to-sketch translation can be written as 
 \vspace{-4pt}
 \begin{align} \label{eqn:5}
-    \mathcal{L}_{tl}^{sk}\!=\!\mathcal{L}_{ad}^{sk}\!+\!\mathcal{L}_{re}^{sk}\!=\!\log(D_{sk}(\hat{\mathbf{f}}_{sk}))\!+\!||\mathbf{f}_{sk}-\hat{\mathbf{f}}_{sk}||_2.
+    \mathcal{L}_{tl}^{sk}\!=\!\mathcal{L}_{ad}^{sk}\!+\!\mathcal{L}_{re}^{sk}\!=\!-\log(D_{sk}(\hat{\mathbf{f}}_{sk}))\!+\!||\mathbf{f}_{sk}-\hat{\mathbf{f}}_{sk}||_2.
 \end{align}
 
 For sketch-to-image translation, we tend to use the sketch structure features to reconstruct image features from the same category. 
 However, images contain extra appearance information (\emph{e.g.}, color, texture) compared with sketches, so it is necessary to compensate for the appearance uncertainty when translating from structure features to image features. 
 Therefore, image appearance features should be integrated with sketch structure features to reconstruct image features. 
 
-In the test stage, given a sketch, we also hope to generate its imaginary image feature to enable retrieval in the image feature space. Nevertheless, we do not have the corresponding image appearance features in this case. One commonly used solution is stochastic sampling during testing. We introduce a variational estimator $V_{im}^{ap}$ to approximate the variational Gaussian distribution $Q(\mathbf{z}_{im}^{ap}|\mathbf{f}_{im}^{ap})$ based on $\mathbf{f}_{im}^{ap}$ , that is, $(\bm{\mu}_{im}^{ap}, \bm{\sigma}_{im}^{ap})= V_{im}^{ap}(\mathbf{f}_{im}^{ap})$. Then, we use Kullback-Leibler divergence to force  $Q(\mathbf{z}_{im}^{ap}|\mathbf{f}_{im})$ to be close to prior distribution $\mathcal{N}(\mathbf{0}, \mathbf{I})$  with $\mathbf{I}$ being identity matrix to support stochastic sample:
+In the test stage, given a sketch, we also hope to generate its imaginary image feature to enable retrieval in the image feature space. Nevertheless, we do not have the corresponding image appearance features in this case. One commonly used solution is stochastic sampling during testing. We introduce a variational estimator $V_{im}^{ap}$ to approximate the variational Gaussian distribution $Q(\mathbf{z}_{im}^{ap}|\mathbf{f}_{im}^{ap})$ based on $\mathbf{f}_{im}^{ap}$ , that is, $(\bm{\mu}_{im}^{ap}, \bm{\sigma}_{im}^{ap})= V_{im}^{ap}(\mathbf{f}_{im}^{ap})$. Then, we use Kullback-Leibler divergence to force  $Q(\mathbf{z}_{im}^{ap}|\mathbf{f}_{im})$ to be close to prior distribution $\mathcal{N}(\mathbf{0}, \mathbf{1})$:
 \vspace{-4pt}
 \begin{align}
-    \mathcal{L}_{KL} = \!-\!D_{KL}(\mathcal{N}(\bm{\mu}_{im}^{ap}, \bm{\sigma}_{im}^{ap}) || \mathcal{N}(\mathbf{0}, \mathbf{I})).
+    \mathcal{L}_{kl} = D_{KL}(\mathcal{N}(\bm{\mu}_{im}^{ap}, \bm{\sigma}_{im}^{ap}) || \mathcal{N}(\mathbf{0}, \mathbf{1})).
 \end{align}
 
-After using reparameterization trick \cite{kingma2013auto} to sample variational appearance feature  $\mathbf{z}_{im}^{ap}$, \emph{i.e.}, $\mathbf{z}_{im}^{ap}=\bm{\mu}_{im}^{ap}+\bm{\epsilon}\circ \bm{\sigma}_{im}^{ap}$, where $\bm{\epsilon}$ is sampled from $\mathcal{N}(\mathbf{0}, \mathbf{I})$ and $\circ$ means element-wise product, we employ a decoder $G_{im}$ to reconstruct $\mathbf{f}_{im}$ based on the concatenation of $\mathbf{z}_{im}^{ap}$ and $\mathbf{f}_{sk}^{st}$.  
+After using reparameterization trick \cite{kingma2013auto} to sample variational appearance feature  $\mathbf{z}_{im}^{ap}$, \emph{i.e.}, $\mathbf{z}_{im}^{ap}=\bm{\mu}_{im}^{ap}+\bm{\epsilon}\circ \bm{\sigma}_{im}^{ap}$, where $\bm{\epsilon}$ is sampled from $\mathcal{N}(\mathbf{0}, \mathbf{1})$ and $\circ$ means element-wise product, we employ a decoder $G_{im}$ to reconstruct $\mathbf{f}_{im}$ based on the concatenation of $\mathbf{z}_{im}^{ap}$ and $\mathbf{f}_{sk}^{st}$.  
 By denoting $\hat{\mathbf{f}}_{im} = G_{im}([\mathbf{z}_{im}^{ap}, \mathbf{f}_{sk}^{st}])$, we employ a reconstruction loss $||\mathbf{f}_{im}\!-\!\hat{\mathbf{f}}_{im}||_2$ and an adversarial loss implemented based on the discriminator $D_{im}$, which distinguishes generated image features from real ones, leading to the following loss function:
 \vspace{-4pt}
 \begin{align} \label{eqn:7}
-    \mathcal{L}_{tl}^{im}\!=\!\mathcal{L}_{ad}^{im}\!+\!\mathcal{L}_{re}^{im} \!=\!\log(D_{im}(\hat{\mathbf{f}}_{im})) \!+\! ||\mathbf{f}_{im}\!-\!\hat{\mathbf{f}}_{im}||_2.
+    \mathcal{L}_{tl}^{im}\!=\!\mathcal{L}_{ad}^{im}\!+\!\mathcal{L}_{re}^{im} \!=\!-\!\log(D_{im}(\hat{\mathbf{f}}_{im})) \!+\! ||\mathbf{f}_{im}\!-\!\hat{\mathbf{f}}_{im}||_2.
 \end{align}
 
-By performing image-to-sketch translation, we expect that the image structure features contain the necessary structure information to reconstruct the sketch features from the same category. By performing sketch-to-image translation, we expect that the image appearance features contain the necessary appearance information to compensate for the sketch structure features when reconstructing image features. Therefore, bi-directional domain translation could cooperate with ranking loss and orthogonal loss to assist feature disentanglement.
+By performing image-to-sketch translation, we expect that the image structure features contain the necessary structure information to reconstruct the sketch features of the same category. By performing sketch-to-image translation, we expect that the image appearance features contain the necessary appearance information to compensate for the sketch structure features when reconstructing image features. Therefore, bi-directional domain translation could cooperate with ranking loss and orthogonal loss to assist feature disentanglement.
 
 Finally, recall that the discriminator $D_{im}$ (\emph{resp.}, $D_{sk}$) is trained to distinguish the generated image (\emph{resp.}, sketch) features from the real ones. So the loss functions for discriminators can be written as
 \vspace{-4pt}
 \begin{align}
-    L_{D}^{im} &= \log(1\!-\!D_{im}(\hat{\mathbf{f}}_{im})) \!+\! \log(D_{im}(\mathbf{f}_{im})), \\
-    L_{D}^{sk} &= \log(1\!-\!D_{sk}(\hat{\mathbf{f}}_{sk})) \!+\! \log(D_{sk}(\mathbf{f}_{sk})).
+    L_{D}^{im} &= -\log(1\!-\!D_{im}(\hat{\mathbf{f}}_{im})) \!-\! \log(D_{im}(\mathbf{f}_{im})), \\
+    L_{D}^{sk} &= -\log(1\!-\!D_{sk}(\hat{\mathbf{f}}_{sk})) \!-\! \log(D_{sk}(\mathbf{f}_{sk})).
 \end{align}
 
 \subsection{Training and Retrieval} \label{3.3}
@@ -226,22 +232,22 @@ Finally, recall that the discriminator $D_{im}$ (\emph{resp.}, $D_{sk}$) is trai
 The full objective function can be divided into the generation loss and the discrimination loss, which can be expressed as
 \vspace{-5pt}
 \begin{align} \label{eqn:total_loss}
-    \mathcal{L}_{G} \!&=\! \mathcal{L}_{or} \!+\! \mathcal{L}_{KL} \!+\! \lambda_1 \mathcal{L}_{rk} \!+\!  \lambda_2 \mathcal{L}_{tl}^{im} \!+\! \mathcal{L}_{tl}^{sk}, \\
+    \mathcal{L}_{G} \!&=\! \mathcal{L}_{or} \!+\! \mathcal{L}_{kl} \!+\! \lambda_1 \mathcal{L}_{rk} \!+\!  \lambda_2 \mathcal{L}_{tl}^{im} \!+\! \mathcal{L}_{tl}^{sk}, \\
     \mathcal{L}_{D} &= L_{D}^{im} \!+\!  L_{D}^{sk},
 \end{align}
 in which $\lambda_1$ and $\lambda_2$ are empirically set as 0.5 and 2.0 respectively. 
-Our model consists of generators and discriminators, in order to stabilize the training process, we follow the training strategy in GAN \cite{goodfellow2014generative} to update them alternatingly with $N_{D}$ and $N_{G}$ iterations respectively.
+Our model consists of generators and discriminators, in order to stabilize the training process, we follow the training strategy in GAN \cite{goodfellow2014generative} to update them alternatingly with $N_{D}$ and $N_{G}$ iterations respectively to minimize $\mathcal{L}_G$ and $\mathcal{L}_D$.
 
 In the test stage, we perform retrieval in both structure feature space and image feature space. Specifically, given a sketch $\mathbf{x}_{sk}$ and an image $\mathbf{x}_{im}$, we compare them in both feature spaces.
 
 1) \textbf{Structure feature space}: We project image feature $\mathbf{f}_{im}$ and sketch feature $\mathbf{f}_{sk}$ into the shared structure feature space by $\mathbf{f}_{im}^{st}=E_{im}^{st}(\mathbf{f}_{im})$ and $\mathbf{f}_{sk}^{st}=E_{sk}^{st}(\mathbf{f}_{sk})$ respectively. Then, we calculate the cosine distance $1\!-\!cos(\mathbf{f}^{st}_{im}, \mathbf{f}^{st}_{sk})$.
 
-2) \textbf{Image feature space}: Based on the sketch structure feature $\mathbf{f}_{sk}^{st}$ and a variational appearance feature sampled from $\mathcal{N}(\mathbf{0},\mathbf{I})$, we can employ the decoder $G_{im}$ to generate an image feature. We can generate $N$ image features vectors by sampling $N$ times ($N=200$ in our experiments) and use the average to represent the final image feature $\hat{\mathbf{f}}_{im}$:
+2) \textbf{Image feature space}: Based on the sketch structure feature $\mathbf{f}_{sk}^{st}$ and a variational appearance feature sampled from $\mathcal{N}(\mathbf{0},\mathbf{1})$, we can employ the decoder $G_{im}$ to generate an image feature. We can generate $N$ image features vectors by sampling $N$ times ($N=200$ in our experiments) and average them to represent the final image feature $\hat{\mathbf{f}}_{im}$:
     \vspace{-5pt}
     \begin{align}
         \hat{\mathbf{f}}_{im} = \frac{1}{N}\sum_{i=1}^{N}G_{im}([\mathbf{f}_{sk}^{st}, \mathbf{z}_i]),
     \end{align}
-    where $\mathbf{z}_i$ is sampled from $\mathcal{N}(\mathbf{0},\mathbf{I})$. Then, we calculate the cosine distance $1\!-\!cos(\hat{\mathbf{f}}_{im}, \mathbf{f}_{im})$.
+    where $\mathbf{z}_i$ is sampled from $\mathcal{N}(\mathbf{0},\mathbf{1})$. Then, we calculate the cosine distance $1\!-\!cos(\hat{\mathbf{f}}_{im}, \mathbf{f}_{im})$.
 
 Finally, we calculate the weighted average of two distances for retrieval:
 \vspace{-5pt}
@@ -254,23 +260,24 @@ Finally, we calculate the weighted average of two distances for retrieval:
 where $\omega$ is a hyper-parameter to balance two feature spaces and set as $0.5$ by default.
 
 \begin{table*}[!htb]
-\resizebox{\textwidth}{!}{%
+\centering
+\resizebox{0.96\textwidth}{!}{%
 \vspace{-10pt}
 \begin{tabular}{cccccccc}
 \hline \hline
                          & \multirow{2}{*}{Method} & \multicolumn{2}{c}{Sketchy Ext. (aligned)} & \multicolumn{2}{c}{Sketchy Ext. (unaligned)} & \multicolumn{2}{c}{TU-Berlin Ext.} \\ \cline{3-8} 
                          &                         & P@200(\%)           & mAP@200(\%)          & P@200(\%)            & mAP@200(\%)           & P@200(\%)       & mAP@200(\%)      \\ \hline
-\multirow{4}{*}{SBIR}    & Cosine                  & 9.0                   & 5.1                & -                      & -                   & 4.6               & 2.0            \\
+\multirow{4}{*}{SBIR}    & Cosine                  & 9.0                   & 5.1                & 9.0                      & 5.1                   & 4.6               & 2.0            \\
                          & 3D shape \cite{wang2015sketch}               & 6.1                   & 1.0                & 7.0                    & 1.8                 & 3.6               & 0.5            \\
                          & SaN \cite{yu2017sketch}                    & 15.3                  & 5.8                & 18.9                   & 8.5                 & 10.1              & 4.2            \\
-                         & Siamese \cite{yelamarthi2018zero}                & 24.4                  & 14.6               & 25.6                   & 15.3                & 8.3              & 3.7            \\ \hline
+                         & Siamese \cite{qi2016sketch}                & 24.4                  & 14.6               & 25.6                   & 15.3                & 8.3              & 3.7            \\ \hline
 \multirow{5}{*}{ZSL}     & ESZSL \cite{romera2015embarrassingly}                  & 16.0                  & 8.3               & 17.2                   & 9.5                & 4.8               & 1.7            \\
                          & SAE  \cite{kodirov2017semantic}                   & 24.4                  & 14.6               & 27.1                   & 17.5                & 11.6              & 5.5            \\
                          & CMT \cite{socher2013zero}                    & 26.9                   & 17.6                & 27.5                    & 17.7                 & 10.0               & 4.3            \\
-                         & SSE \cite{zhang2015bit}                    & 6.9                   & 2.3                & 7.3                    & 3.3                 & 4.1               & 1.2            \\
+                         & SSE \cite{zhang2015zero}                    & 6.9                   & 2.3                & 7.3                    & 3.3                 & 4.1               & 1.2            \\
                          & DeViSE \cite{frome2013devise}                 & 14.3                   & 4.7                & 15.4                    & 5.4                 & 8.0               & 2.2            \\ \hline
 \multirow{6}{*}{ZS-SBIR} & CVAE \cite{yelamarthi2018zero}                   & 33.4                  & 22.6               & 31.2                   & 19.9                & 10.2              & 4.9            \\
-                         & SEM-PCYC \cite{dupont2018learning}                   & 28.0                  & 17.7               & 30.0                   & 19.4                & 12.4              & 5.7            \\
+                         & SEM-PCYC \cite{dutta2019semantically}                   & 28.0                  & 17.7               & 30.0                   & 19.4                & 12.4              & 5.7            \\
                          & Xu \textit{et al.} \cite{xu2019semantic}         & 20.4                  & 12.0               & 20.8                        & 12.6                & 7.4               & 2.9                \\
                          & \textbf{BDT-St}            & 36.1                  & 25.5               & 36.9                   & 25.8                & 15.2              & 7.9           \\
                          & \textbf{BDT-Im}            & 37.2                  & 26.8               & 35.1                   & 24.9                & 14.7              & 7.1           \\
@@ -290,9 +297,10 @@ where $\omega$ is a hyper-parameter to balance two feature spaces and set as $0.
 \subsubsection{Dataset}
 We evaluate our BDT framework and baselines on two large-scale sketch-image datasets: TU-Berlin \cite{eitz2012hdhso} and Sketchy \cite{sangkloy2016sketchy} with extended images obtained from \cite{liu2017deep}.
 
-\textbf{Sketchy} (Extended) \cite{sangkloy2016sketchy} is originally comprised of 75,479 sketches and 12,500 images from 125 categories, where the images and sketches are aligned pairs. Liu \textit{et al.} \cite{liu2017deep} extended the image retrieval gallery by collecting extra 60,502 images, so that the total number of images in extended Sketchy reaches 73,002. Following the standard zero-shot setting in \cite{yelamarthi2018zero}, we partition the total 125 categories into 104 seen categories and 21 unseen categories according to whether the category appears in the 1,000 categories of ImageNet-1k \cite{deng2009imagenet}, which avoids violating the zero-shot assumption when utilizing models pre-trained on ImageNet-1k. In the training stage, there were previously two settings about how to utilize the training data: 1) use aligned pairs without extended training images \cite{yelamarthi2018zero}, which is referred to ``aligned" in Table~\ref{tab:1}; 2) do not use the information of aligned pairs but use all training data including extended images \cite{shen2018zero}, which is referred to as ``unaligned" in Table~\ref{tab:1}.
+\textbf{Sketchy} (Extended) \cite{sangkloy2016sketchy} is originally comprised of 75,479 sketches and 12,500 images from 125 categories, where the images and sketches are aligned pairs. Liu \textit{et al.} \cite{liu2017deep} extended the image retrieval gallery by collecting extra 60,502 images, so that the total number of images in extended Sketchy reaches 73,002. Following the standard zero-shot setting in \cite{yelamarthi2018zero}, we partition the total 125 categories into 104 seen categories and 21 unseen categories according to whether the category appears in the 1,000 categories of ImageNet \cite{deng2009imagenet}, which avoids violating the zero-shot assumption when utilizing models pre-trained on ImageNet. In the training stage, there were previously two settings about how to utilize the training data: 1) use aligned pairs without extended training images \cite{yelamarthi2018zero}, which is referred to ``aligned" in Table~\ref{tab:1}; 2) do not use the information of aligned pairs but use all training data including extended images \cite{shen2018zero}, which is referred to as ``unaligned" in Table~\ref{tab:1}.
 
-\textbf{TU-Berlin} (Extended) \cite{eitz2012hdhso} contains 250 categories with a total of 20, 000 sketches extended by \cite{liu2017deep} with 204,489 natural images from the sketch categories. Following the same split criterion as Sketchy, we first split the TU-Berlin into 165 seen categories and 85 unseen categories according to whether the category appears in the 1,000 categories of ImageNet-1k \cite{deng2009imagenet}. As Shen \textit{et al.} \cite{shen2018zero} suggested, we re-select unseen categories with more than 400 images out of the 85 categories. In the end, there are 186 seen and 64 unseen categories. Compared with the Sketchy dataset, TU-Berlin is much more challenging because of more unseen categories and fewer training sketches.
+\textbf{TU-Berlin} (Extended) \cite{eitz2012hdhso} contains 250 categories with a total of 20, 000 sketches extended by \cite{liu2017deep} with 204,489 natural images based on the sketch categories. Following the same split criterion as Sketchy, we first split the TU-Berlin into 165 seen categories and 85 unseen categories according to whether the category appears in the 1,000 categories of ImageNet \cite{deng2009imagenet}. As Shen \textit{et al.} \cite{shen2018zero} suggest, we re-select unseen categories with more than 400 images out of the 85 categories. In the end, there are 186 seen and 64 unseen categories \footnotemark . Compared with the Sketchy dataset, TU-Berlin is much more challenging because of more unseen categories and fewer training sketches.
+\footnotetext{The detailed category split will be found in Appendix}
 
 \subsubsection{Implementation Details}
 We implement our method and all the other baselines using PyTorch \cite{paszke2017automatic}, which are all trained on one GTX 1080Ti GPU. We use a VGG-16 (pre-trained on ImageNet dataset) to extract the image and sketch features. As Sec. \ref{3.2} mentioned, we concatenate the output of multiple layers, leading to a 5568-dim vector for each image and sketch. For each encoder, we use two fully-connected (FC) layers with Batch Normalization and ReLU as activation. For the variational estimator, we use two individual FC layers to obtain the mean and variance of approximated $\mathbf{z}_{im}^{ap}$ separately. For each decoder, we use two FC layers with ReLU activation. For discriminators, we use two FC layers with Batch Normalization and LeakyReLU as activation. The dimensionality of $\mathbf{f}_{sk}^{st}$, $\mathbf{f}_{im}^{st}$, $\mathbf{f}_{im}^{ap}$, $\mathbf{z}_{im}^{ap}$ are all 1024.
@@ -301,15 +309,15 @@ We use Adam \cite{kingma2014adam} optimizer with learning rate $2 \times 10^{-4}
 
 \subsection{Comparison with Existing Methods}
 We compare our model with $12$ prior methods, which can be divided into three categories: sketch-based image retrieval (SBIR) baselines, zero-shot learning (ZSL) baselines, zero-shot sketch-based image retrieval (ZS-SBIR) baselines. 
-The SBIR baselines include Siamese \cite{yelamarthi2018zero}, SaN \cite{yu2017sketch}, and 3D shape \cite{wang2015sketch}. A cosine baseline is also added, which conducts nearest neighbor search based on 4096-dim VGG-16 \cite{simonyan2014very} feature vectors.
-The ZSL baselines include ESZSL \cite{romera2015embarrassingly}, SAE \cite{kodirov2017semantic}, CMT \cite{socher2013zero}, SSE \cite{zhang2015bit}, and DeViSE \cite{frome2013devise}.
+The SBIR baselines include Siamese \cite{qi2016sketch}, SaN \cite{yu2017sketch}, and 3D shape \cite{wang2015sketch}. A cosine baseline is also added, which conducts nearest neighbor search based on 4096-dim VGG-16 \cite{simonyan2014very} feature vectors.
+The ZSL baselines include ESZSL \cite{romera2015embarrassingly}, SAE \cite{kodirov2017semantic}, CMT \cite{socher2013zero}, SSE \cite{zhang2015zero}, and DeViSE \cite{frome2013devise}.
 The ZS-SBIR baselies include CVAE \cite{yelamarthi2018zero}, SEM-PCYC \cite{dutta2019semantically}, and Xu \textit{et al.} \cite{xu2019semantic}.
 For a fair comparison, we replace the backbone of all previous models by VGG-16 except SaN, which designs a new backbone to extract sketch and image features. 
 All the backbones are pre-trained on ImageNet. 
-Note that our method does not rely on semantic information obtained from large textual corpus (\emph{e.g.}, word vector \cite{mikolov2013distributed} and WordNet \cite{miller1998wordnet}). To make a fair comparison, for those baselines which require additional semantic information, we remove the semantic information \cite{dutta2019semantically} or replace the semantic information by the average of image features within each category \cite{wang2015sketch, romera2015embarrassingly, kodirov2017semantic, socher2013zero, zhang2015bit, frome2013devise, xu2019semantic} \protect\footnotemark[1]. In fact, we have tried both ``remove" and ``replace" strategies for each baseline, and select the better one for each baseline.
+Note that our method does not rely on semantic information obtained from large textual corpus (\emph{e.g.}, word vector \cite{mikolov2013distributed} and WordNet \cite{miller1998wordnet}). To make a fair comparison, for those baselines which require additional semantic information, we remove the semantic information \cite{dutta2019semantically} or replace the semantic information by the average of image features within each category \cite{wang2015sketch, romera2015embarrassingly, kodirov2017semantic, socher2013zero, zhang2015zero, frome2013devise, xu2019semantic} \protect\footnotemark. In fact, we have tried both ``remove" and ``replace" strategies for all these baselines if applicable, and select the better one for each baseline.
 Besides, we do not compare with the methods that fine-tune the pre-trained backbone during training, like SAKE \cite{liu2019semantic} and EMS \cite{lu2018learning}, because they learn four times more model parameters than ours.
 
-\footnotetext[1]{The results of ZSIH \cite{shen2018zero} become much worse after using this strategy, and thus we omit its results in Table~\ref{tab:1}.}
+\footnotetext{The results of ZSIH \cite{shen2018zero} become much worse after using this strategy, and thus we omit its results in Table~\ref{tab:1}.}
 
 \begin{table}[]
 \setlength{\tabcolsep}{0.3mm}{
@@ -330,19 +338,19 @@ w/o appearance & 37.2 & 26.0 & 36.5 & 25.9 \\ \hline \hline
 }}
 \caption{Ablation Studies of our method on Sketchy dataset.}
 \label{tab:2}
-\vspace{-15pt}
+\vspace{-14pt}
 \end{table}
 
 
 Based on Table~\ref{tab:1}, we can find that most of the SBIR and ZSL baselines under-perform the ZS-SBIR baselines. 
-Compared with Cosine, 3D shape \cite{wang2015sketch} and DeViSE \cite{frome2013devise} perform ever worse, which indicates these methods heavily overfit on the seen categories. 
+Compared with Cosine, 3D shape \cite{wang2015sketch} and SSE \cite{zhang2015zero} perform even worse, which indicates these methods heavily overfit on the seen categories. 
 On Sketchy dataset, we observe that the results in ``unaligned" setting are usually better than the corresponding results in ``aligned" setting, mainly because that the amount of unaligned data is five times larger than that of aligned data.
 However, CVAE exhibits the opposite tendency because the aligned sketch-image pairs could help reconstruct images from their paired sketches. 
 On the TU-Berlin dataset, the overall results are worse than those reported in previous works \cite{liu2019semantic, dutta2019semantically} due to different seen/unseen splits. 
 In particular, the number of unseen categories under our split is two times larger than that in  \cite{liu2019semantic, dutta2019semantically}, and our split criterion also guarantees no information leak from ImageNet to unseen categories.
 
 In terms of P@200, our proposed BDT excels the state-of-the-art methods by 7.8\% on the Sketchy (aligned) dataset, 8.5\% on Sketchy (unaligned) dataset, and 5.2\% on TU-Berlin dataset. 
-To better understand our method, we also list our results by performing retrieval only in the image feature space or structure space as \textbf{BDT-Im} and \textbf{BDT-St}, respectively. Referring to the comparison between \textbf{BDT-Im} and CVAE as well as the comparison between \textbf{BDT-St} and Siamese, the disentangled representations indeed help the model to generalize from seen to unseen categories. 
+To better understand our method, we also list our results by performing retrieval only in the image feature space or structure feature space as \textbf{BDT-Im} and \textbf{BDT-St}, respectively. Referring to the comparison between \textbf{BDT-Im} and CVAE as well as the comparison between \textbf{BDT-St} and Siamese, the disentangled representations indeed help the model to generalize from seen to unseen categories. 
 Besides, by comparing \textbf{BDT} with \textbf{BDT-Im} and \textbf{BDT-St}, we can see that the combination of image feature space and structure feature space can boost the performance by a large margin, which indicates the complementarity of two feature spaces.
 
 \begin{figure}
@@ -350,9 +358,9 @@ Besides, by comparing \textbf{BDT} with \textbf{BDT-Im} and \textbf{BDT-St}, we 
 \includegraphics[width=1\linewidth]{combine.pdf}
 \end{center}
 \vspace{-15pt}
-   \caption{a. The performance variance of our method when setting $\omega$ in the range of $[0, 1]$, where Sk (a), Sk(u) and TU represent Sketchy (aligned), Sketch (unaligned) and TU-Berlin respectively. b. The performance and orthogonality variance of our method along with the training epoch.}
+   \caption{(a) The performance variance of our method when setting $\omega$ in the range of $[0, 1]$, where Sk (a), Sk (u) and TU represent Sketchy (aligned), Sketch (unaligned) and TU-Berlin respectively. (b) The performance and orthogonality variance of our method along with the training epoch.}
 \label{fig:orth}
-\vspace{-15pt}
+\vspace{-12pt}
 \end{figure}
 
 \begin{figure*}
@@ -360,9 +368,9 @@ Besides, by comparing \textbf{BDT} with \textbf{BDT-Im} and \textbf{BDT-St}, we 
 \includegraphics[width=1\linewidth]{casestudy2.pdf}
 \end{center}
 \vspace{-10pt}
-   \caption{The top-5 images retrieved by BDT, BDT-St, BDT-Im, CVAE methods on Sketchy (Aligned) dataset. The green (\emph{resp.}, red) border indicates the correct (\emph{resp.}, incorrect) retrieval results.}
+   \caption{The top-5 images retrieved by BDT, BDT-St, BDT-Im, CVAE methods on Sketchy test set. The green (\emph{resp.}, red) border indicates the correct (\emph{resp.}, incorrect) retrieval results.}
 \label{fig:case}
-\vspace{-14pt}
+\vspace{-12pt}
 \end{figure*}
 
 \subsection{Ablation Study}
@@ -387,14 +395,14 @@ To demonstrate the ability of our model to disentangle the image features, we fi
 \vspace{-10pt}
    \caption{The t-SNE visualization of six types of features on Sketchy test set. Best viewed in color.}
 \label{fig:tsne}
-\vspace{-15pt}
+\vspace{-12pt}
 \end{figure}
 
-Then, in Figure \ref{fig:tsne}, we visualize six types of features from 10 randomly selected unseen categories using t-SNE \cite{maaten2008visualizing}: image appearance features, image structure features, sketch features, sketch structure features, sketch translated image features. According to Figure \ref{fig:tsne}, we have the following observations: 1) Different categories can be separated very well in ``image structure" and ``sketch structure", which significantly facilitates the retrieval in structure feature space; 2) The results in ``image structure" and ``image appearance" are complementary, in accordance with the disentanglement between structure features and appearance features; 3) The results in ``image features" and ``translated image features" are similar, which shows the effectiveness of image feature reconstruction; 4) The results in ``sketch feature" show the relatively poor separability of sketch features, which makes sketch feature space ill-suited for image retrieval.
+Then, in Figure \ref{fig:tsne}, we visualize six types of features from 10 randomly selected unseen categories using t-SNE \cite{maaten2008visualizing}: image appearance features, image structure features, sketch features, sketch structure features, sketch translated image features. According to Figure \ref{fig:tsne}, we have the following observations: 1) Different categories can be separated very well in ``image structure" and ``sketch structure", which significantly facilitates the retrieval in structure feature space; 2) The results in ``image structure" and ``image appearance" are complementary, in accordance with the disentanglement between structure features and appearance features; 3) The results in ``image features" and ``translated image features" are similar, which shows the effectiveness of image feature reconstruction; 4) The results in ``sketch features" show the relatively poor separability of sketch features, which makes sketch feature space ill-suited for image retrieval.
 
 \subsection{Case Study}
-In Figure \ref{fig:case}, we show the retrieval results of \textbf{BDT-St}, \textbf{BDT-Im}, \textbf{BDT}, and CVAE \cite{yelamarthi2018zero}. One interesting observation is that BDT-ST could capture the correspondence of local structure information, while BDT-Im behaves like CVAE and focuses on global pose/structure information. For example, given a ``door" sketch, the retrieved images of both CVAE and BDT-Im have the global grid structure similar to the given sketch, but BDT-St could capture the correspondence between the retrieved images and the given sketch \emph{w.r.t.} certain local structure information like door-case.
-One possible explanation is that the structure features are trained by aligning different domains into a shared space; however, the reconstructed image features are trained by aligning the sketch features to image features, which makes the former one more flexible and tolerant to the difference between image and sketch. 
+In Figure \ref{fig:case}, we show the retrieval results of BDT, BDT-St, BDT-Im, and CVAE \cite{yelamarthi2018zero}. One interesting observation is that BDT-ST could capture the correspondence of local structure information, while BDT-Im behaves like CVAE and focuses on global pose/structure information. For example, given a ``door" sketch, the retrieved images of both CVAE and BDT-Im have the global grid structure similar to the given sketch, but BDT-St could capture the correspondence between the retrieved images and the given sketch \emph{w.r.t.} certain local structure information like door-case.
+One possible explanation is that the structure features are trained by aligning different domains into a shared space; however, the reconstructed image features are trained by aligning the sketch features to image features, which makes the former more flexible and tolerant to the difference between image and sketch. 
 Moreover, BDT combines the strengths of both BDT-St and BDT-Im, producing better retrieval results.
 
 
@@ -405,5 +413,62 @@ We have studied zero-shot sketch-based image retrieval (ZS-SBIR) from a new view
 \bibliographystyle{ieee_fullname}
 \bibliography{egbib}
 }
+
+\clearpage
+
+\Large\textbf{Appendix} \normalsize \\
+
+In the following, we provide the training (seen) and testing (unseen) category split on two datasets used in our experiments. \\
+
+\large1) \textbf{Split for Sketchy dataset} \normalsize
+
+\begin{itemize}
+    \item \textbf{Training Categories}: squirrel, turtle, tiger, bicycle, crocodilian, frog, bread, hedgehog, hot-air\_balloon, ape, elephant, geyser, chicken, ray, fan, hotdog, pizza, duck, piano, armor, axe, hammer, camel, horse, spider, kangaroo, mushroom, owl, seal, table, hermit\_crab, zebra, car\_(sedan), shark, flower, guitar, bench, wine\_bottle, fish, snail, deer, knife, airplane, sea\_turtle, hat, eyeglasses, parrot, bee, tank, lion, swan, penguin, violin, rabbit, motorcycle, lobster, sheep, snake, shoe, hamburger, teddy\_bear, pretzel, alarm\_clock, church, ant, trumpet, candle, chair, hourglass, cat, scorpion, bear, dog, beetle, cannon, pig, cup, crab, pickup\_truck, pineapple, apple, lizard, sailboat, spoon, umbrella, rocket, teapot, couch, butterfly, blimp, jellyfish, rifle, starfish, banana, wading\_bird, bell, pistol, saxophone, strawberry, jack-o-lantern, castle, racket, harp, volcano
+    \item \textbf{Test Categories}: bat, cabin, cow, dolphin, door, giraffe, helicopter, mouse, pear, raccoon, rhinoceros, saw, scissors, seagull, skyscraper, songbird, sword, tree, wheelchair, windmill, window
+\end{itemize}
+
+\large2) \textbf{Split for TU-Berlin dataset} \normalsize
+
+\begin{itemize}
+    \item \textbf{Training Categories}: arm, ashtray, axe, baseball bat, blimp, brain, bulldozer, bush, cake, chandelier, cloud, cow, crown, dolphin, donut, dragon, duck, eyeglasses, giraffe, grapes, grenade, head, head-phones, helicopter, horse, lightbulb, megaphone, microscope, mosquito, octopus, paper clip, pear, person walking, pigeon, pipe (for smoking), pumpkin, rainbow, rooster, satellite, satellite dish, scissors, seagull, skateboard, skyscraper, snowboard, stapler, suitcase, sun, sword, tire, toilet, tomato, toothbrush, trousers, walkie talkie, windmill, wrist-watch, carrot, key, palm tree, parrot, rollerblades, suv, tree
+    \item \textbf{Test Categories}: airplane, alarm clock, angel, ant, apple, armchair, backpack, banana, barn, basket, bathtub, bear (animal), bed, bee, beer-mug, bell, bench, bicycle, binoculars, book, bookshelf, boomerang, bottle opener, bowl, bread, bridge, bus, butterfly, cabinet, cactus, calculator, camel, camera, candle, cannon, canoe, car (sedan), castle, cat, cell phone, chair, church, cigarette, comb, computer monitor, computer-mouse, couch, crab, crane (machine), crocodile, cup, diamond, dog, door, door handle, ear, elephant, envelope, eye, face, fan, feather, fire hydrant, fish, flashlight, floor lamp, flower with stem, flying bird, flying saucer, foot, fork, frog, frying-pan, guitar, hamburger, hammer, hand, harp, hat, hedgehog, helmet, hot air balloon, hot-dog, hourglass, house, human-skeleton, ice-cream-cone, ipod, kangaroo, keyboard, microphone, monkey, moon, motorbike, mouse (animal), mouth, mug, mushroom, nose, owl, panda, parachute, parking meter, pen, penguin, person sitting, piano, pickup truck, pig, pineapple, pizza, potted plant, power outlet, present, pretzel, purse, rabbit, race car, radio, revolver, rifle, sailboat, santa claus, saxophone, scorpion, screwdriver, sea turtle, shark, sheep, ship, shoe, shovel, skull, snail, snake, snowman, socks, space shuttle, speed-boat, spider, sponge bob, spoon, squirrel, standing bird, strawberry, streetlight, submarine, swan, syringe, t-shirt, table, tablelamp, teacup, teapot, teddy-bear, telephone, tennis-racket, tent, tiger, tooth, tractor, traffic light, train, trombone, truck, trumpet, tv, umbrella, van, vase, violin, wheel, wheelbarrow, wine-bottle, wineglass, zebra
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}

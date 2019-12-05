@@ -1,0 +1,401 @@
+\begin{thebibliography}{10}\itemsep=-1pt
+
+\bibitem{cao2013sym}
+Xiaochun Cao, Hua Zhang, Si Liu, Xiaojie Guo, and Liang Lin.
+\newblock Sym-fish: A symmetry-aware flip invariant sketch histogram shape
+  descriptor.
+\newblock In {\em ICCV}, 2013.
+
+\bibitem{cao2011edgel}
+Yang Cao, Changhu Wang, Liqing Zhang, and Lei Zhang.
+\newblock Edgel index for large-scale sketch-based image search.
+\newblock In {\em CVPR}, 2011.
+
+\bibitem{cao2010mindfinder}
+Yang Cao, Hai Wang, Changhu Wang, Zhiwei Li, Liqing Zhang, and Lei Zhang.
+\newblock Mindfinder: interactive sketch-based image search on millions of
+  images.
+\newblock In {\em ACM MM}, 2010.
+
+\bibitem{chen2018deep}
+Jiaxin Chen and Yi Fang.
+\newblock Deep cross-modality adaptation via semantics preserving adversarial
+  learning for sketch-based 3d shape retrieval.
+\newblock In {\em ECCV}, 2018.
+
+\bibitem{chen2018isolating}
+Tian~Qi Chen, Xuechen Li, Roger~B Grosse, and David~K Duvenaud.
+\newblock Isolating sources of disentanglement in variational autoencoders.
+\newblock In {\em NeurIPS}, 2018.
+
+\bibitem{chen2016infogan}
+Xi Chen, Yan Duan, Rein Houthooft, John Schulman, Ilya Sutskever, and Pieter
+  Abbeel.
+\newblock {InfoGAN}: {I}nterpretable representation learning by information
+  maximizing generative adversarial nets.
+\newblock In {\em NeurIPS}, 2016.
+
+\bibitem{StarGAN2018}
+Yunjey Choi, Minje Choi, Munyoung Kim, Jung-Woo Ha, Sunghun Kim, and Jaegul
+  Choo.
+\newblock {StarGAN}: {U}nified generative adversarial networks for multi-domain
+  image-to-image translation.
+\newblock In {\em CVPR}, 2018.
+
+\bibitem{chopra2005learning}
+Sumit Chopra, Raia Hadsell, Yann LeCun, et~al.
+\newblock Learning a similarity metric discriminatively, with application to
+  face verification.
+\newblock In {\em CVPR}, 2005.
+
+\bibitem{del1997visual}
+Alberto Del~Bimbo and Pietro Pala.
+\newblock Visual image retrieval by elastic matching of user sketches.
+\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  19(2):121--132, 1997.
+
+\bibitem{deng2009imagenet}
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei.
+\newblock Image{N}et: A large-scale hierarchical image database.
+\newblock In {\em CVPR}, 2009.
+
+\bibitem{dupont2018learning}
+Emilien Dupont.
+\newblock Learning disentangled joint continuous and discrete representations.
+\newblock In {\em NeurIPS}, 2018.
+
+\bibitem{dutta2019semantically}
+Anjan Dutta and Zeynep Akata.
+\newblock Semantically tied paired cycle consistency for zero-shot sketch-based
+  image retrieval.
+\newblock In {\em CVPR}, 2019.
+
+\bibitem{eitz2012hdhso}
+Mathias Eitz, James Hays, and Marc Alexa.
+\newblock How do humans sketch objects?
+\newblock In {\em SIGGRAPH}, 2012.
+
+\bibitem{eitz2010evaluation}
+Mathias Eitz, Kristian Hildebrand, Tamy Boubekeur, and Marc Alexa.
+\newblock An evaluation of descriptors for large-scale image retrieval from
+  sketched feature lines.
+\newblock {\em Computers \& Graphics}, 34(5):482--498, 2010.
+
+\bibitem{eitz2010sketch}
+Mathias Eitz, Kristian Hildebrand, Tamy Boubekeur, and Marc Alexa.
+\newblock Sketch-based image retrieval: Benchmark and bag-of-features
+  descriptors.
+\newblock {\em IEEE transactions on visualization and computer graphics},
+  17(11):1624--1636, 2010.
+
+\bibitem{frome2013devise}
+Andrea Frome, Greg~S Corrado, Jon Shlens, Samy Bengio, Jeff Dean, Marc'Aurelio
+  Ranzato, and Tomas Mikolov.
+\newblock Devise: {A} deep visual-semantic embedding model.
+\newblock In {\em NeurIPS}, 2013.
+
+\bibitem{gonzalez2018image}
+Abel Gonzalez-Garcia, Joost van~de Weijer, and Yoshua Bengio.
+\newblock Image-to-image translation for cross-domain disentanglement.
+\newblock In {\em NeurIPS}, 2018.
+
+\bibitem{goodfellow2014generative}
+Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley,
+  Sherjil Ozair, Aaron Courville, and Yoshua Bengio.
+\newblock Generative adversarial nets.
+\newblock In {\em NeurIPS}, 2014.
+
+\bibitem{higgins2017beta}
+Irina Higgins, Loic Matthey, Arka Pal, Christopher Burgess, Xavier Glorot,
+  Matthew Botvinick, Shakir Mohamed, and Alexander Lerchner.
+\newblock beta-{VAE}: {L}earning basic visual concepts with a constrained
+  variational framework.
+\newblock In {\em ICLR}, 2017.
+
+\bibitem{hu2013performance}
+Rui Hu and John Collomosse.
+\newblock A performance evaluation of gradient field hog descriptor for sketch
+  based image retrieval.
+\newblock {\em Computer Vision and Image Understanding}, 117(7):790--806, 2013.
+
+\bibitem{hu2011bag}
+Rui Hu, Tinghuai Wang, and John Collomosse.
+\newblock A bag-of-regions approach to sketch-based image retrieval.
+\newblock In {\em ICIP}, 2011.
+
+\bibitem{huang2018multimodal}
+Xun Huang, Ming-Yu Liu, Serge Belongie, and Jan Kautz.
+\newblock Multimodal unsupervised image-to-image translation.
+\newblock In {\em ECCV}, 2018.
+
+\bibitem{pix2pix2017}
+Phillip Isola, Jun-Yan Zhu, Tinghui Zhou, and Alexei~A Efros.
+\newblock Image-to-image translation with conditional adversarial networks.
+\newblock {\em CVPR}, 2017.
+
+\bibitem{james2014reenact}
+Stuart James, Manuel~J Fonseca, and John Collomosse.
+\newblock Reenact: Sketch based choreographic design from archival dance
+  footage.
+\newblock In {\em ICMR}.
+
+\bibitem{jha2018disentangling}
+Ananya~Harsh Jha, Saket Anand, Maneesh Singh, and VSR Veeravasarapu.
+\newblock Disentangling factors of variation with cycle-consistent variational
+  auto-encoders.
+\newblock In {\em ECCV}, 2018.
+
+\bibitem{kim2018disentangling}
+Hyunjik Kim and Andriy Mnih.
+\newblock Disentangling by factorising.
+\newblock In {\em ICML}, 2018.
+
+\bibitem{kim2017learning}
+Taeksoo Kim, Moonsu Cha, Hyunsoo Kim, Jung~Kwon Lee, and Jiwon Kim.
+\newblock Learning to discover cross-domain relations with generative
+  adversarial networks.
+\newblock In {\em ICML}, 2017.
+
+\bibitem{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: {A} method for stochastic optimization.
+\newblock {\em ICLR}, 2014.
+
+\bibitem{kingma2014semi}
+Durk~P Kingma, Shakir Mohamed, Danilo~Jimenez Rezende, and Max Welling.
+\newblock Semi-supervised learning with deep generative models.
+\newblock In {\em NeurIPS}, 2014.
+
+\bibitem{kingma2013auto}
+Diederik~P Kingma and Max Welling.
+\newblock Auto-encoding variational bayes.
+\newblock In {\em ICLR}, 2014.
+
+\bibitem{kodirov2017semantic}
+Elyor Kodirov, Tao Xiang, and Shaogang Gong.
+\newblock Semantic autoencoder for zero-shot learning.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{lee2018diverse}
+Hsin-Ying Lee, Hung-Yu Tseng, Jia-Bin Huang, Maneesh Singh, and Ming-Hsuan
+  Yang.
+\newblock Diverse image-to-image translation via disentangled representations.
+\newblock In {\em ECCV}, 2018.
+
+\bibitem{lee2019drit}
+Hsin-Ying Lee, Hung-Yu Tseng, Qi Mao, Jia-Bin Huang, Yu-Ding Lu, Maneesh Singh,
+  and Ming-Hsuan Yang.
+\newblock {DRIT++}: {D}iverse image-to-image translation via disentangled
+  representations.
+\newblock {\em arXiv preprint arXiv:1905.01270}, 2019.
+
+\bibitem{li2016fine}
+Ke Li, Kaiyue Pang, Yi-Zhe Song, Timothy Hospedales, Honggang Zhang, and
+  Yichuan Hu.
+\newblock Fine-grained sketch-based image retrieval: The role of part-aware
+  attributes.
+\newblock In {\em WACV}, 2016.
+
+\bibitem{liu2018unified}
+Alexander~H Liu, Yen-Cheng Liu, Yu-Ying Yeh, and Yu-Chiang~Frank Wang.
+\newblock A unified feature disentangler for multi-domain image translation and
+  manipulation.
+\newblock In {\em NeurIPS}, 2018.
+
+\bibitem{liu2017deep}
+Li Liu, Fumin Shen, Yuming Shen, Xianglong Liu, and Ling Shao.
+\newblock Deep sketch hashing: Fast free-hand sketch-based image retrieval.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{liu2019semantic}
+Qing Liu, Lingxi Xie, Huiyu Wang, and Alan Yuille.
+\newblock Semantic-aware knowledge preservation for zero-shot sketch-based
+  image retrieval.
+\newblock In {\em ICCV}, 2019.
+
+\bibitem{liu2018multi}
+Yang Liu, Zhaowen Wang, Hailin Jin, and Ian Wassell.
+\newblock Multi-task adversarial network for disentangled feature learning.
+\newblock In {\em CVPR}, 2018.
+
+\bibitem{liu2018exploring}
+Yu Liu, Fangyin Wei, Jing Shao, Lu Sheng, Junjie Yan, and Xiaogang Wang.
+\newblock Exploring disentangled feature representation beyond face
+  identification.
+\newblock In {\em CVPR}, 2018.
+
+\bibitem{lu2018learning}
+Peng Lu, Gao Huang, Yanwei Fu, Guodong Guo, and Hangyu Lin.
+\newblock Learning large euclidean margin for sketch-based image retrieval.
+\newblock {\em arXiv preprint arXiv:1812.04275}, 2018.
+
+\bibitem{ma2018disentangled}
+Liqian Ma, Qianru Sun, Stamatios Georgoulis, Luc Van~Gool, Bernt Schiele, and
+  Mario Fritz.
+\newblock Disentangled person image generation.
+\newblock In {\em CVPR}, 2018.
+
+\bibitem{maaten2008visualizing}
+Laurens van~der Maaten and Geoffrey Hinton.
+\newblock Visualizing data using t-{SNE}.
+\newblock {\em Journal of machine learning research}, 9.
+
+\bibitem{mathieu2016disentangling}
+Michael~F Mathieu, Junbo~Jake Zhao, Junbo Zhao, Aditya Ramesh, Pablo
+  Sprechmann, and Yann LeCun.
+\newblock Disentangling factors of variation in deep representation using
+  adversarial training.
+\newblock In {\em NeurIPS}, 2016.
+
+\bibitem{mikolov2013distributed}
+Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg~S Corrado, and Jeff Dean.
+\newblock Distributed representations of words and phrases and their
+  compositionality.
+\newblock In {\em NeurIPS}, 2013.
+
+\bibitem{miller1998wordnet}
+George~A Miller.
+\newblock {\em Word{N}et: {A}n electronic lexical database}.
+\newblock 1998.
+
+\bibitem{parui2014similarity}
+Sarthak Parui and Anurag Mittal.
+\newblock Similarity-invariant sketch-based image retrieval in large databases.
+\newblock In {\em ECCV}, 2014.
+
+\bibitem{paszke2017automatic}
+Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary
+  DeVito, Zeming Lin, Alban Desmaison, Luca Antiga, and Adam Lerer.
+\newblock Automatic differentiation in {PyTorch}.
+\newblock In {\em NeurIPS Autodiff Workshop}, 2017.
+
+\bibitem{qi2016sketch}
+Yonggang Qi, Yi-Zhe Song, Honggang Zhang, and Jun Liu.
+\newblock Sketch-based image retrieval via siamese convolutional neural
+  network.
+\newblock In {\em ICIP}, 2016.
+
+\bibitem{romera2015embarrassingly}
+Bernardino Romera and Philip Torr.
+\newblock An embarrassingly simple approach to zero-shot learning.
+\newblock In {\em ICML}, 2015.
+
+\bibitem{saavedra2015sketch}
+Jose~M Saavedra, Juan~Manuel Barrios, and S Orand.
+\newblock Sketch based image retrieval using learned keyshapes ({LKS}).
+\newblock In {\em BMVC}, 2015.
+
+\bibitem{sangkloy2016sketchy}
+Patsorn Sangkloy, Nathan Burnell, Cusuh Ham, and James Hays.
+\newblock The sketchy database: learning to retrieve badly drawn bunnies.
+\newblock {\em ACM Transactions on Graphics (TOG)}, 35(4):119, 2016.
+
+\bibitem{shen2018zero}
+Yuming Shen, Li Liu, Fumin Shen, and Ling Shao.
+\newblock Zero-shot sketch-image hashing.
+\newblock In {\em CVPR}, 2018.
+
+\bibitem{shu2017neural}
+Zhixin Shu, Ersin Yumer, Sunil Hadap, Kalyan Sunkavalli, Eli Shechtman, and
+  Dimitris Samaras.
+\newblock Neural face editing with intrinsic image disentangling.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{simonyan2014very}
+Karen Simonyan and Andrew Zisserman.
+\newblock Very deep convolutional networks for large-scale image recognition.
+\newblock In {\em ICLR}, 2015.
+
+\bibitem{socher2013zero}
+Richard Socher, Milind Ganjoo, Christopher~D Manning, and Andrew Ng.
+\newblock Zero-shot learning through cross-modal transfer.
+\newblock In {\em NeurIPS}, 2013.
+
+\bibitem{song2017deep}
+Jifei Song, Qian Yu, Yi-Zhe Song, Tao Xiang, and Timothy~M Hospedales.
+\newblock Deep spatial-semantic attention for fine-grained sketch-based image
+  retrieval.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{tran2017disentangled}
+Luan Tran, Xi Yin, and Xiaoming Liu.
+\newblock Disentangled representation learning gan for pose-invariant face
+  recognition.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{wang2015sketch}
+Fang Wang, Le Kang, and Yi Li.
+\newblock Sketch-based 3d shape retrieval using convolutional neural networks.
+\newblock In {\em CVPR}, 2015.
+
+\bibitem{wang2019stacked}
+Hao Wang, Cheng Deng, Xinxu Xu, Wei Liu, Xinbo Gao, and Dacheng Tao.
+\newblock Stacked semantic-guided network for zero-shot sketch-based image
+  retrieval.
+\newblock {\em arXiv preprint arXiv:1904.01971}, 2019.
+
+\bibitem{xu2019semantic}
+Xinxun Xu, Hao Wang, Leida Li, and Cheng Deng.
+\newblock Semantic adversarial network for zero-shot sketch-based image
+  retrieval.
+\newblock {\em arXiv preprint arXiv:1905.02327}, 2019.
+
+\bibitem{yan2016attribute2image}
+Xinchen Yan, Jimei Yang, Kihyuk Sohn, and Honglak Lee.
+\newblock Attribute2{I}mage: {C}onditional image generation from visual
+  attributes.
+\newblock In {\em ECCV}, 2016.
+
+\bibitem{yelamarthi2018zero}
+Sasi~Kiran Yelamarthi, Shiva~Krishna Reddy, Ashish Mishra, and Anurag Mittal.
+\newblock A zero-shot framework for sketch based image retrieval.
+\newblock In {\em ECCV}, 2018.
+
+\bibitem{yu2016sketch}
+Qian Yu, Feng Liu, Yi-Zhe Song, Tao Xiang, Timothy~M Hospedales, and
+  Chen-Change Loy.
+\newblock Sketch me that shoe.
+\newblock In {\em CVPR}, 2016.
+
+\bibitem{yu2017sketch}
+Qian Yu, Yongxin Yang, Feng Liu, Yi-Zhe Song, Tao Xiang, and Timothy~M
+  Hospedales.
+\newblock Sketch-a-net: A deep neural network that beats humans.
+\newblock {\em International journal of computer vision}, 122(3):411--425,
+  2017.
+
+\bibitem{zhang2015zero}
+Ziming Zhang and Venkatesh Saligrama.
+\newblock Zero-shot learning via semantic similarity embedding.
+\newblock In {\em Proceedings of the IEEE international conference on computer
+  vision}, pages 4166--4174, 2015.
+
+\bibitem{zhao2017infovae}
+Shengjia Zhao, Jiaming Song, and Stefano Ermon.
+\newblock {InfoVAE}: {I}nformation maximizing variational autoencoders.
+\newblock {\em arXiv preprint arXiv:1706.02262}, 2017.
+
+\bibitem{zheng2019joint}
+Zhedong Zheng, Xiaodong Yang, Zhiding Yu, Liang Zheng, Yi Yang, and Jan Kautz.
+\newblock Joint discriminative and generative learning for person
+  re-identification.
+\newblock In {\em CVPR}, 2019.
+
+\bibitem{zhou2012sketch}
+Rong Zhou, Liuli Chen, and Liqing Zhang.
+\newblock Sketch-based image retrieval on a large scale database.
+\newblock In {\em ACM MM}, 2012.
+
+\bibitem{zhu2017unpaired}
+Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei~A Efros.
+\newblock Unpaired image-to-image translation using cycle-consistent
+  adversarial networks.
+\newblock In {\em CVPR}, 2017.
+
+\bibitem{zhu2017toward}
+Jun-Yan Zhu, Richard Zhang, Deepak Pathak, Trevor Darrell, Alexei~A Efros,
+  Oliver Wang, and Eli Shechtman.
+\newblock Toward multimodal image-to-image translation.
+\newblock In {\em NeurIPS}, 2017.
+
+\end{thebibliography}

@@ -1,0 +1,99 @@
+\backcite {del1997visual, cao2010mindfinder, eitz2010evaluation, eitz2010sketch, cao2011edgel, hu2011bag, zhou2012sketch, hu2013performance, cao2013sym, parui2014similarity, james2014reenact, wang2015sketch, saavedra2015sketch, li2016fine, yu2016sketch, qi2016sketch, sangkloy2016sketchy, lu2018learning}{{1}{1}{section.1}}
+\backcite {yu2017sketch}{{1}{1}{figure.caption.1}}
+\backcite {shen2018zero}{{1}{1}{figure.caption.1}}
+\backcite {dupont2018learning}{{1}{1}{figure.caption.1}}
+\backcite {yelamarthi2018zero}{{1}{1}{figure.caption.1}}
+\backcite {yelamarthi2018zero}{{1}{1}{figure.caption.1}}
+\backcite {yu2017sketch}{{1}{1}{figure.caption.1}}
+\backcite {yelamarthi2018zero}{{2}{1}{figure.caption.1}}
+\backcite {xu2019semantic, wang2019stacked, dutta2019semantically, shen2018zero}{{2}{1}{figure.caption.1}}
+\backcite {liu2019semantic}{{2}{1}{figure.caption.1}}
+\backcite {yelamarthi2018zero}{{2}{1}{figure.caption.1}}
+\backcite {liu2017deep, wang2015sketch, yu2016sketch}{{2}{1}{figure.caption.1}}
+\backcite {saavedra2015sketch, hu2013performance, eitz2010sketch, hu2011bag, eitz2010evaluation}{{2}{2.1}{subsection.2.1}}
+\backcite {qi2016sketch, sangkloy2016sketchy, song2017deep}{{2}{2.1}{subsection.2.1}}
+\backcite {chopra2005learning, sangkloy2016sketchy}{{2}{2.1}{subsection.2.1}}
+\backcite {chen2018deep}{{2}{2.1}{subsection.2.1}}
+\backcite {shen2018zero}{{2}{2.1}{subsection.2.1}}
+\backcite {yelamarthi2018zero, xu2019semantic, wang2019stacked, liu2019semantic, dutta2019semantically}{{2}{2.1}{subsection.2.1}}
+\backcite {wang2019stacked, shen2018zero, xu2019semantic, dutta2019semantically}{{2}{2.1}{subsection.2.1}}
+\backcite {yelamarthi2018zero}{{2}{2.1}{subsection.2.1}}
+\backcite {deng2009imagenet}{{2}{2.1}{subsection.2.1}}
+\backcite {liu2019semantic}{{2}{2.1}{subsection.2.1}}
+\backcite {chen2016infogan}{{3}{2.2}{subsection.2.2}}
+\backcite {liu2018multi}{{3}{2.2}{subsection.2.2}}
+\backcite {higgins2017beta}{{3}{2.2}{subsection.2.2}}
+\backcite {dupont2018learning}{{3}{2.2}{subsection.2.2}}
+\backcite {kim2018disentangling}{{3}{2.2}{subsection.2.2}}
+\backcite {zhao2017infovae}{{3}{2.2}{subsection.2.2}}
+\backcite {chen2018isolating}{{3}{2.2}{subsection.2.2}}
+\backcite {kingma2014semi}{{3}{2.2}{subsection.2.2}}
+\backcite {zheng2019joint}{{3}{2.2}{subsection.2.2}}
+\backcite {zheng2019joint}{{3}{2.2}{subsection.2.2}}
+\backcite {liu2018unified, liu2018exploring, shu2017neural, tran2017disentangled}{{3}{2.2}{subsection.2.2}}
+\backcite {ma2018disentangled, yan2016attribute2image, mathieu2016disentangling, jha2018disentangling}{{3}{2.2}{subsection.2.2}}
+\backcite {pix2pix2017}{{3}{2.3}{subsection.2.3}}
+\backcite {zhu2017unpaired}{{3}{2.3}{subsection.2.3}}
+\backcite {zhu2017toward}{{3}{2.3}{subsection.2.3}}
+\backcite {StarGAN2018}{{3}{2.3}{subsection.2.3}}
+\backcite {kim2017learning}{{3}{2.3}{subsection.2.3}}
+\backcite {lee2018diverse,lee2019drit,huang2018multimodal,gonzalez2018image}{{3}{2.3}{subsection.2.3}}
+\backcite {lee2018diverse,lee2019drit,huang2018multimodal,gonzalez2018image}{{3}{2.3}{subsection.2.3}}
+\backcite {yelamarthi2018zero,wang2019stacked}{{3}{3.1}{subsection.3.1}}
+\backcite {wang2019stacked}{{3}{3.2.1}{subsubsection.3.2.1}}
+\backcite {deng2009imagenet}{{3}{3.2.1}{subsubsection.3.2.1}}
+\backcite {simonyan2014very}{{4}{2}{figure.caption.2}}
+\backcite {kingma2013auto}{{5}{3.2.3}{equation.3.6}}
+\backcite {goodfellow2014generative}{{5}{3.3}{equation.3.11}}
+\backcite {eitz2012hdhso}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {sangkloy2016sketchy}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {liu2017deep}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {sangkloy2016sketchy}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {liu2017deep}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {yelamarthi2018zero}{{5}{4.1.1}{subsubsection.4.1.1}}
+\backcite {wang2015sketch}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {yu2017sketch}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {yelamarthi2018zero}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {romera2015embarrassingly}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {kodirov2017semantic}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {socher2013zero}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {zhang2015bit}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {frome2013devise}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {yelamarthi2018zero}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {dupont2018learning}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {xu2019semantic}{{6}{\caption@xref {??}{ on input line 279}}{table.caption.3}}
+\backcite {deng2009imagenet}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {yelamarthi2018zero}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {shen2018zero}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {eitz2012hdhso}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {liu2017deep}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {deng2009imagenet}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {shen2018zero}{{6}{4.1.1}{subsubsection.4.1.1}}
+\backcite {paszke2017automatic}{{6}{4.1.2}{subsubsection.4.1.2}}
+\backcite {kingma2014adam}{{6}{4.1.2}{subsubsection.4.1.2}}
+\backcite {yelamarthi2018zero}{{6}{4.1.2}{subsubsection.4.1.2}}
+\backcite {yelamarthi2018zero}{{6}{4.2}{subsection.4.2}}
+\backcite {yu2017sketch}{{6}{4.2}{subsection.4.2}}
+\backcite {wang2015sketch}{{6}{4.2}{subsection.4.2}}
+\backcite {simonyan2014very}{{6}{4.2}{subsection.4.2}}
+\backcite {romera2015embarrassingly}{{6}{4.2}{subsection.4.2}}
+\backcite {kodirov2017semantic}{{6}{4.2}{subsection.4.2}}
+\backcite {socher2013zero}{{6}{4.2}{subsection.4.2}}
+\backcite {zhang2015bit}{{6}{4.2}{subsection.4.2}}
+\backcite {frome2013devise}{{6}{4.2}{subsection.4.2}}
+\backcite {yelamarthi2018zero}{{6}{4.2}{subsection.4.2}}
+\backcite {dutta2019semantically}{{6}{4.2}{subsection.4.2}}
+\backcite {xu2019semantic}{{6}{4.2}{subsection.4.2}}
+\backcite {mikolov2013distributed}{{7}{4.2}{subsection.4.2}}
+\backcite {miller1998wordnet}{{7}{4.2}{subsection.4.2}}
+\backcite {dutta2019semantically}{{7}{4.2}{subsection.4.2}}
+\backcite {wang2015sketch, romera2015embarrassingly, kodirov2017semantic, socher2013zero, zhang2015bit, frome2013devise, xu2019semantic}{{7}{4.2}{subsection.4.2}}
+\backcite {liu2019semantic}{{7}{4.2}{subsection.4.2}}
+\backcite {lu2018learning}{{7}{4.2}{subsection.4.2}}
+\backcite {wang2015sketch}{{7}{4.2}{table.caption.4}}
+\backcite {frome2013devise}{{7}{4.2}{table.caption.4}}
+\backcite {liu2019semantic, dutta2019semantically}{{7}{4.2}{table.caption.4}}
+\backcite {liu2019semantic, dutta2019semantically}{{7}{4.2}{table.caption.4}}
+\backcite {shen2018zero}{{7}{1}{subsection.4.2}}
+\backcite {maaten2008visualizing}{{8}{4.4}{figure.caption.7}}
+\backcite {yelamarthi2018zero}{{8}{4.5}{subsection.4.5}}

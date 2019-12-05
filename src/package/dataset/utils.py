@@ -81,6 +81,43 @@ TRAIN_CLASS_TUBERLIN = sorted(['airplane', 'alarm clock', 'angel', 'ant', 'apple
 CLASS_TUBERLIN = sorted(TEST_CLASS_TUBERLIN + TRAIN_CLASS_TUBERLIN)
 assert len(CLASS_TUBERLIN) == 250
 
+TEST_CLASS_TUBERLIN_I = sorted(['arm', 'ashtray', 'axe', 'baseballbat', 'blimp', 'brain', 'bulldozer', 'bush',
+                    'cake', 'chandeler', 'cloud', 'cow', 'crown', 'dolphin', 'donut', 'dragon', 'duck', 'eyeglasses',
+                    'griaffe', 'grapes', 'grenade', 'head', 'headphones', 'helicopter',
+                    'horse', 'lightbulb', 'megaphone', 'microscope', 'mosquito', 'octopus', 'paperclip',
+                    'pear', 'personwalking', 'pigeon', 'pipe', 'pumpkin', 'rainbow',
+                    'rooster', 'satellite', 'satellitedish', 'scissors', 'seagull', 'skateboard', 'skyscraper',
+                    'snowboard', 'stapler', 'suitcase', 'sun', 'sword', 'tire', 'toilet', 'tomato',
+                    'toothbrush', 'trousers', 'walkietalkie', 'windmill', 'wristwatching', 'carrot', 'key', 'palmtree',
+                    'parrot', 'rollerblades', 'suv', 'tree']) # 64
+
+
+TRAIN_CLASS_TUBERLIN_I = sorted(['airplane', 'alarmclock', 'angel', 'ant', 'apple', 'armchair', 'backpack', 'banana',
+                               'barn', 'basket', 'bathtub', 'bearanimal', 'bed', 'bee', 'beermug', 'bell', 'bench',
+                               'bicycle', 'binoculars', 'book', 'bookshelf', 'boomerang', 'bottleopener', 'bowl',
+                               'bread', 'bridge', 'bus', 'butterfly', 'cabinet', 'cactus', 'calculator', 'camel',
+                               'camera', 'candle', 'cannon', 'canoe', 'carsedan', 'castle', 'cat', 'cellphone',
+                               'chair', 'church', 'cigarette', 'comb', 'computermonitor', 'computermouse', 'couch',
+                               'crab', 'cranemachine', 'crocodile', 'cup', 'diamod', 'dog', 'door', 'doorhandle',
+                               'ear', 'elephant', 'envelope', 'eye', 'face', 'fan', 'feather', 'firehydrant', 'fish',
+                               'flashlight', 'floorlamp', 'flowerwithstem', 'flyingbird', 'flyingsaucer', 'foot',
+                               'fork', 'frog', 'fryingpan', 'guitar', 'hamburger', 'hammer', 'hand', 'harp', 'hat',
+                               'hedgehog', 'helmet', 'hotairballoon', 'hotdog', 'hourglass', 'house',
+                               'humanskeleton', 'icecreamcone', 'ipod', 'kangaroo', 'keyboard', 'knife', 'ladder',
+                               'laptop', 'leaf', 'lighter', 'lion', 'lobster', 'loudspeaker', 'mailbox', 'mermaid',
+                               'microphone', 'monkey', 'moon', 'motorbike', 'mouse', 'mouth', 'mug',
+                               'mushroom', 'nose', 'owl', 'panda', 'parachute', 'parkingmeter', 'pen', 'penguin',
+                               'personsitting', 'piano', 'pickuptruck', 'pig', 'pineapple', 'pizza', 'pottedplant',
+                               'poweroutlet', 'present', 'pretzel', 'purse', 'rabbit', 'racecar', 'radio', 'revolver',
+                               'rifle', 'sailboat', 'santaclaus', 'saxophone', 'scorpion', 'screwdriver', 'seaturtle',
+                               'shark', 'sheep', 'ship', 'shoe', 'shovel', 'skull', 'snail', 'snake', 'snowman',
+                               'socks', 'spacesshuttle', 'speedboat', 'spidar', 'spongebob', 'spoon', 'squirrel',
+                               'standingbird', 'strawberry', 'streetlight', 'submarine', 'swan', 'syringe', 'tshirt',
+                               'table', 'tablelamp', 'teacup', 'teapot', 'teddybear', 'telephone', 'tennisracket',
+                               'tent', 'tiger', 'tooth', 'tractor', 'trafficlight', 'train', 'tromobone', 'truck',
+                               'trumpet', 'tv', 'umbrella', 'van', 'vase', 'violin', 'wheel',
+                               'wheelbarrow', 'winebottle', 'wineglass', 'zebra'])
+
 
 IMAGE_SIZE = 224
 

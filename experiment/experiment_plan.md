@@ -51,3 +51,8 @@ part 1: Ranking Loss + 1024 + paired decode(s) + 4096(image) + 4096(sketch) (dro
         Ranking Loss + 1024 + paired decode(s) + 3072(image) + 3072(sketch) (drop 0.0) (margin1 4) (no orth)
         Ranking Loss + 1024 + paired decode(s) + 2048(image) + 2048(sketch) (drop 0.0) (margin1 4) (no orth)
         Ranking Loss + 1024 + paired decode(s) + 1024(image) + 1024(sketch) (drop 0.0) (margin1 4) (no orth)
+
+part 2: Ranking Loss + 512 + paired decode(s) + 512(image) + 512(sketch) (drop 0.0) (margin1 4) (no orth)
+        Ranking Loss + 512 + paired decode(e) + 512(image) + 512(sketch) (drop 0.0) (margin1 4) (no orth)
+        Ranking Loss + 512 + paired decode(es) + 512(image) + 512(sketch) (drop 0.0) (margin1 4) (no orth)
+        Ranking Loss + 1024 + paired decode(s) + 4096(image) + 4096(sketch) (drop 0.0) (margin1 4) (no orth)

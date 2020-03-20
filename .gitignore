@@ -136,3 +136,5 @@ np
 .texpadtmp/
 *pdf
 ./src/test.py
+/paper/
+/Paper/
